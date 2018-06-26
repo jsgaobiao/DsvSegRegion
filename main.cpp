@@ -174,7 +174,7 @@ void ProcessOneFrame ()
 	}
 	
 	//生成可视化距离图像处理结果
-	DrawRangeView ();
+//	DrawRangeView ();
 	
 	//将全局DEM转换到当前车体坐标系下
 	PredictGloDem (gm,ggm);
@@ -278,19 +278,6 @@ void DoProcessing()
 
     LONGLONG fileSize = myGetFileSize(dfp);
     dFrmNum = fileSize / 180 / dsbytesiz;
-//	DWORD dwSizeLow,dwSizeHigh,dwError;  //低位，高位，错误代码
-//	dwSizeLow = GetFileSize((HANDLE)dfp, &dwSizeHigh);  //就是他了
-//	if (dwSizeLow == 0xFFFFFFFF && (dwError = GetLastError()) != NO_ERROR ){
-//		return;
-//	}
-//	else {
-//		LONGLONG llSize,llPow;
-//		llPow = 4294967296; //(LONGLONG)pow(2,32);
-//		llSize = dwSizeHigh*llPow+dwSizeLow; //可能是大于4G的怪物
-//		dFrmNum = llSize/180/dsbytesiz;
-//	}
-
-//	SetFilePointer( dfp, 0, 0, FILE_BEGIN );
 
 	InitRmap (&rm);
 	InitDmap (&dm);
@@ -340,6 +327,22 @@ void DoProcessing()
 			else
 				waitkeydelay=1;
 		}
+        if (WaitKey == 'a') {     // Back
+            dFrmNo -= 20;
+            if (dFrmNo < 0) {
+                dFrmNo = 0;
+            }
+            fseeko64(dfp, dFrmNo * dsbytesiz * BKNUM_PER_FRM, SEEK_SET);
+            continue;
+        }
+        if (WaitKey == 'd') {     // Forword
+            dFrmNo += 20;
+            if (dFrmNo >= dFrmNum) {
+                dFrmNo = dFrmNum - 1;
+            }
+            fseeko64(dfp, dFrmNo * dsbytesiz * BKNUM_PER_FRM, SEEK_SET);
+            continue;
+        }
 		dFrmNo++;
 	}
 
