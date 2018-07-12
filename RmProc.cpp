@@ -56,6 +56,8 @@ void DrawRangeView ()
 			}
 		}
 	}
+    cvFlip(rm.lMap, rm.lMap, 0);
+    cvFlip(rm.rMap, rm.rMap, 0);
 }
 
 void GenerateRangeView ()

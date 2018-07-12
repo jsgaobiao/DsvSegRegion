@@ -156,8 +156,8 @@ typedef struct {
 	int				*regionID;
 	int				regnum;
 	SEGBUF			*segbuf;
-	IplImage		*rMap;
-	IplImage		*lMap;
+    IplImage		*rMap;      // range image
+    IplImage		*lMap;      // region segmentation image
 } RMAP;
 
 #define	WIDSIZ		120.0

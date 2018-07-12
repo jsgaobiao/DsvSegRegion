@@ -121,7 +121,6 @@ void CorrectPoints ()
 			rot1[1][0] = sin (onefrm->dsv[i].ang.z-onefrm->dsv[0].ang.z);
 			rot1[1][1] = cos (onefrm->dsv[i].ang.z-onefrm->dsv[0].ang.z);
 
-
 			//shv: SHV_src-SHV_tar
 			point2d shv;
 			shv.x = onefrm->dsv[i].shv.x-onefrm->dsv[0].shv.x;
@@ -174,7 +173,7 @@ void ProcessOneFrame ()
 	}
 	
 	//生成可视化距离图像处理结果
-//	DrawRangeView ();
+    DrawRangeView ();
 	
 	//将全局DEM转换到当前车体坐标系下
 	PredictGloDem (gm,ggm);
@@ -211,8 +210,7 @@ BOOL ReadOneDsvFrame ()
 	DWORD	dwReadBytes;
 	int		i;
 
-	for (i=0; i<BKNUM_PER_FRM; i++) {
-//		if (!ReadFile( dfp, (ONEDSVDATA *)&onefrm->dsv[i], dsbytesiz, &dwReadBytes, NULL ) || (dsbytesiz != dwReadBytes))
+    for (i=0; i<BKNUM_PER_FRM; i++) {
         dwReadBytes = fread((ONEDSVDATA *)&onefrm->dsv[i], 1, dsbytesiz, dfp);
         if ((dsbytesiz != dwReadBytes) || (ferror(dfp))) {
             printf("Error from reading file.\n");
@@ -278,24 +276,20 @@ void DoProcessing()
 
     LONGLONG fileSize = myGetFileSize(dfp);
     dFrmNum = fileSize / 180 / dsbytesiz;
-
 	InitRmap (&rm);
 	InitDmap (&dm);
 	InitDmap (&gm);
 	InitDmap (&ggm);
 	onefrm= new ONEDSVFRAME[1];
-
 	IplImage * col = cvCreateImage (cvSize (1024, rm.len*3),IPL_DEPTH_8U,3); 
-
 	CvFont font;
 	cvInitFont(&font,CV_FONT_HERSHEY_DUPLEX, 1,1, 0, 2);
 
 	int waitkeydelay=0;
-
 //	JumpTo (dFrmNum/2);
 	dFrmNo = 0;
 
-	while (ReadOneDsvFrame ())
+    while (ReadOneDsvFrame ())  // 读取一帧数据（580个block），保存在onefrm中
 	{
 		if (dFrmNo%100==0)
 			printf("%d (%d)\n",dFrmNo,dFrmNum);
@@ -304,16 +298,17 @@ void DoProcessing()
 		ProcessOneFrame ();
 
         //可视化
-//		cvResize (rm.rMap, col);
         char str[10];
         sprintf (str, "Fno%d", dFrmNo);
-        cvPutText(dm.lmap, str,cvPoint(50,50),&font,CV_RGB(0,0,255));
-//		cvShowImage("range image",col);
-//		cvResize (rm.lMap, col);
-//		cvShowImage("region",col);
-        if (dm.lmap) cvShowImage("ldemlab",dm.lmap);
-        if (gm.lmap) cvShowImage("gdemlab",gm.lmap);
-        if (gm.smap) cvShowImage("gsublab",gm.smap);
+        cvPutText(dm.lmap, str, cvPoint(50,50), &font, CV_RGB(0,0,255));
+
+        cvResize (rm.rMap, col);  // 距离图像 可视化
+        cvShowImage("range image",col);
+        cvResize (rm.lMap, col);  // 分割图像 可视化
+        cvShowImage("region",col);
+        if (dm.lmap) cvShowImage("ldemlab",dm.lmap);    // 单帧 可行驶区域
+        if (gm.lmap) cvShowImage("gdemlab",gm.lmap);    // 多帧 可行驶区域 不可行驶区域（高于/低于路面）
+        if (gm.smap) cvShowImage("gsublab",gm.smap);    // 行驶区域结果 可行驶区域 正负障碍
 
         cv::setMouseCallback("gsublab", CallbackLocDem, 0);
 
@@ -321,7 +316,7 @@ void DoProcessing()
 		WaitKey = cvWaitKey(waitkeydelay);
 		if (WaitKey==27)
 			break;
-		if (WaitKey=='z') {
+        if (WaitKey=='z') {     // 连续播放
 			if (waitkeydelay==1)
 				waitkeydelay=0;
 			else
