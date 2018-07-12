@@ -19,7 +19,7 @@ void DrawDem (DMAP &m)
                 double pr = m.lpr[y*m.wid+x];
 
                 if (m.lab[y*m.wid+x]==TRAVESABLE) {
-                    //?????????¨°
+                    //¿ÉÍ¨ÐÐÇøÓò
                     m.lmap->imageData[(y*m.wid+x)*3] = 0;
                     m.lmap->imageData[(y*m.wid+x)*3+1] =55+200*pr;
                     m.lmap->imageData[(y*m.wid+x)*3+2] = 0;
@@ -33,20 +33,20 @@ void DrawDem (DMAP &m)
                         }
                         else
                         if (m.demhmin[y*m.wid+x]<m.centerln[y].h-POSOBSMINHEIGHT) {
-                            //????¡ãNEGATOBSTA
+                            //¸ºÕÏ°­NEGATOBSTA
                             m.lmap->imageData[(y*m.wid+x)*3] = 0;
                             m.lmap->imageData[(y*m.wid+x)*3+1] =0;
                             m.lmap->imageData[(y*m.wid+x)*3+2] = 55+200*pr;
                         }
                         else {
-                            //?????¡¤??????????¡ã?TRAVESABLE??????
+                            //ÓëµÀÂ·Í¬¸ß¶È£¬°´TRAVESABLE¿ÉÊÓ»¯
                             m.lmap->imageData[(y*m.wid+x)*3] = 0;
                             m.lmap->imageData[(y*m.wid+x)*3+1] = 55+200*pr;
                             m.lmap->imageData[(y*m.wid+x)*3+2] = 0;
                         }
                     }
                     else {
-                        //????????NONTRAVESABLE
+                        //²»¿ÉÍ¨ÐÐNONTRAVESABLE
                         m.lmap->imageData[(y*m.wid+x)*3] = 55+200*pr;
                         m.lmap->imageData[(y*m.wid+x)*3+1] =0;
                         m.lmap->imageData[(y*m.wid+x)*3+2] = 55+200*pr;
@@ -243,7 +243,7 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
                     if (lpr<0.2) continue;
 
                     if (!gmtar.lab[yy*gmtar.wid+xx]) {
-                        //lab??????¡À??¨¨??
+                        //lab»¹Ã»ÓÐÉèÖÃ
                         if (gmtmp.demgnum[y*gmtmp.wid+x]) {
                             gmtar.demg[yy*gmtar.wid+xx]=gmtmp.demg[y*gmtmp.wid+x];
                             gmtar.demgnum[yy*gmtar.wid+xx]=gmtmp.demgnum[y*gmtmp.wid+x];
@@ -257,7 +257,7 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
                         gmtar.lpr[yy*gmtar.wid+xx]=gmtmp.lpr[y*gmtmp.wid+x]*fac;
                     }
                     else if (gmtar.lpr[yy*gmtar.wid+xx]<(gmtmp.lpr[y*gmtmp.wid+x]*fac)) {
-                        //???????¨®??????
+                        //È¡¸ÅÂÊ´óµÄ¸³Öµ
                         if (gmtmp.demgnum[y*gmtmp.wid+x]) {
                             gmtar.demg[yy*gmtar.wid+xx]=gmtmp.demg[y*gmtmp.wid+x];
                             gmtar.demgnum[yy*gmtar.wid+xx]=gmtmp.demgnum[y*gmtmp.wid+x];
@@ -269,12 +269,12 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
                         }
 
                         if (gmtar.lab[yy*gmtar.wid+xx]==gmtmp.lab[y*gmtmp.wid+x]) {
-                            //????????lab?¨¤????????????,1.2????¨¦????
+                            //Èç¹ûÁ½¸ölabÏàÍ¬£¬¸ÅÂÊÔö¼Ó1.2Îª¾­ÑéÏµÊý
 //							gmtar.lpr[yy*gmtar.wid+xx]=min(1.0,gmtar.lpr[yy*gmtar.wid+xx]+gmtmp.lpr[y*gmtmp.wid+x]*fac);
                             gmtar.lpr[yy*gmtar.wid+xx]=gmtmp.lpr[y*gmtmp.wid+x]*fac*1.2;
                         }
                         else {
-                            //????????lab???¨¤????????????,0.8????¨¦????
+                            //Èç¹ûÁ½¸ölab²»ÏàÍ¬£¬¸ÅÂÊ½µµÍ0.8£¬Îª¾­ÑéÏµÊý
                             gmtar.lab[yy*gmtar.wid+xx]=gmtmp.lab[y*gmtmp.wid+x];
                             gmtar.lpr[yy*gmtar.wid+xx]=gmtmp.lpr[y*gmtmp.wid+x]*fac*0.8;
                         }
@@ -321,7 +321,7 @@ void UpdateGloDem (DMAP &glo, DMAP &loc)
                     glo.lpr[gy*glo.wid+gx] = loc.lpr[dy*loc.wid+dx];
                 }
             }
-            //9999??????????¡¤??€?¡À???????????¡À????
+            //9999µÄÉÏÏÞ£¬·ÀÖ¹³¤Ê±¼ä³µÁ¾¾²Ö¹Ê±Òç³ö
             if (glo.demgnum[gy*glo.wid+gx]&&loc.demgnum[dy*loc.wid+dx]) {
                 glo.demg[gy*glo.wid+gx] = (glo.demg[gy*glo.wid+gx]*glo.demgnum[gy*glo.wid+gx]+
                                            loc.demg[dy*loc.wid+dx]*loc.demgnum[dy*loc.wid+dx])/
@@ -431,7 +431,7 @@ void GenerateLocDem (DMAP &loc)
             if (!loc.demgnum[y*loc.wid+x] && !loc.demhnum[y*loc.wid+x])
                 continue;
             else if (loc.demgnum[y*loc.wid+x] && !loc.demhnum[y*loc.wid+x]) {
-                //?????????¨°
+                //¿ÉÍ¨ÐÐÇøÓò
                 loc.lab[y*loc.wid+x] = TRAVESABLE;
             }
             else if (!loc.demgnum[y*loc.wid+x] && loc.demhnum[y*loc.wid+x]) {
@@ -450,28 +450,28 @@ void GenerateLocDem (DMAP &loc)
                     if (gz!=INVALIDDOUBLE) break;
                 }
                 if (loc.demhmin[y*loc.wid+x]>=gz-POSOBSMINHEIGHT && loc.demhmax[y*loc.wid+x]<=gz+POSOBSMINHEIGHT) {
-                    //?????????¨°
+                    //¿ÉÍ¨ÐÐÇøÓò
                     loc.lab[y*loc.wid+x] = TRAVESABLE;
                 }
                 else {
-                    //???????????¨°
+                    //²»¿ÉÍ¨ÐÐÇøÓò
                     loc.lab[y*loc.wid+x] = NONTRAVESABLE;
                 }
             }
             else if (loc.demgnum[y*loc.wid+x] && loc.demhnum[y*loc.wid+x]) {
                 double dd = loc.demhmin[y*loc.wid+x]-loc.demg[y*loc.wid+x];
                 if (dd>3.0)	{			//larger than vehicle height
-                    //?¨¹????????????
+                    //¿ÉÍ¨ÐÐ£¬Ðü¸¡Îï
                     loc.lab[y*loc.wid+x] = TRAVESABLE;
                 }
                 else {
                     dd = loc.demhmax[y*loc.wid+x]-loc.demg[y*loc.wid+x];
                     if (dd<POSOBSMINHEIGHT) {
-                        //?????????¨°
+                        //¿ÉÍ¨ÐÐÇøÓò
                         loc.lab[y*loc.wid+x] = TRAVESABLE;
                     }
                     else {
-                        //???????????¨°
+                        //²»¿ÉÍ¨ÐÐÇøÓò
                         loc.lab[y*loc.wid+x] = NONTRAVESABLE;
                     }
                 }
@@ -876,10 +876,10 @@ void ExtractRoadCenterline (DMAP &glo)
 
     }
 
-    double alpha, delta;	//alpha???¡ã???????¨¨????????????????delta???¨¨??????????
-    double dis1, dis2;		//dis1???¡ã???????¨¨?????€???¡Â???????¨¤????dis2??y???????¨¨?????€???¡Â???????¨¤??
-    delta = (VMAXANG-VMINANG)/63.0;		//???¨¨???¨¨?????????¨¤??
-    h = VEHICLEHEIGHT;				//?€???¡Á????????????
+    double alpha, delta;	//alphaÎªÇ°Ò»ÌõÉ¨ÃèÏßÓë´¹ÏßµÄ¼Ð½Ç¡¢deltaÉ¨ÃèÏß¼äµÄ¼Ð½Ç
+    double dis1, dis2;		//dis1ÎªÇ°Ò»ÌõÉ¨ÃèÏßµ½¼¤¹âÆ÷µÄË®Æ½¾àÀë¡¢dis2Îªy¶ÔÓ¦É¨ÃèÏßµ½¼¤¹âÆ÷µÄË®Æ½¾àÀë
+    delta = (VMAXANG-VMINANG)/63.0;		//¼ÙÉèÉ¨ÃèÏß¼ä¼Ð½ÇÏàµÈ
+    h = VEHICLEHEIGHT;				//¼¤¹âÀ×´ïÓëµØÃæ¸ß¶È
     glo.centerln[glo.len/2].dl = 0.3;
     for (y=1; y<=glo.len/2; y++) {
         dis1 = y*PIXSIZ;

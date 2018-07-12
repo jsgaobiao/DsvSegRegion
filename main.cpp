@@ -250,15 +250,6 @@ void CallbackLocDem(int event, int x, int y, int flags, void *ustc)
     }
 }
 
-//void JumpTo (int fno)
-//{
-//	LARGE_INTEGER li;
-
-//    li.QuadPart = LONGLONG (dsbytesiz)*BKNUM_PER_FRM*fno;
-//	li.LowPart = SetFilePointer( dfp, li.LowPart, &li.HighPart, FILE_BEGIN );
-//	dFrmNo = fno;
-//}
-
 LONGLONG myGetFileSize(FILE *f)
 {
     // set the file pointer to end of file
@@ -285,8 +276,7 @@ void DoProcessing()
 	CvFont font;
 	cvInitFont(&font,CV_FONT_HERSHEY_DUPLEX, 1,1, 0, 2);
 
-	int waitkeydelay=0;
-//	JumpTo (dFrmNum/2);
+    int waitkeydelay=0;
 	dFrmNo = 0;
 
     while (ReadOneDsvFrame ())  // 读取一帧数据（580个block），保存在onefrm中

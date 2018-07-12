@@ -11,27 +11,35 @@ extern ONEDSVFRAME	*onefrm;
 
 vector <PTOpti> VecOpti;
 
-bool isppNeighbor (point3fi *pt, point3fi *cp)
-{
-	bool isneighbor=false;
-	double dz = fabs(pt->z-cp->z);
-	if (dz<0.1)
-		isneighbor = true;
-	else {
-		double dh = sqrt(sqr(pt->x-cp->x)+sqr(pt->y-cp->y));
-		if (dh<0.56) 
-			isneighbor = false;
-		else {
-			double ang = atan2(dz, dh);
-			if (ang<0.17)		//5deg
-				isneighbor = true;
-			else
-				isneighbor = false;
-		}
-	}
 
-	return isneighbor;
+bool isppNeighbor (point3fi *pt, point3fi *cp, bool ishori)
+{
+    double rng = max (p2r(pt),p2r(cp));
+    double maxdd = ishori?max(BASEERROR,0.03*rng):max(BASEERROR,0.3*rng);
+    double dd = ppDistance3fi (pt, cp);
+    if (dd>maxdd)
+        return false;
+
+    bool isneighbor=false;
+    double dz = fabs(pt->z-cp->z);
+    if (dz<0.1)
+        isneighbor = true;
+    else {
+        double dh = sqrt(sqr(pt->x-cp->x)+sqr(pt->y-cp->y));
+        if (dh<0.56)
+            isneighbor = false;
+        else {
+            double ang = atan2(dz, dh);
+            if (ang<0.17)		//5deg
+                isneighbor = true;
+            else
+                isneighbor = false;
+        }
+    }
+
+    return isneighbor;
 }
+
 
 bool AddPoints(IMCOORDINATE seed,vector<IMCOORDINATE> & vec, int _regid)
 {
@@ -100,7 +108,9 @@ void ContourExtraction ()
 					pt = &rm.pts[rm.wid*xx+yy];
 					if (!pt->i)
 						continue;
-					if (!isppNeighbor (pt, cp)) {
+
+                    bool ishori = (yy == y) ? false : true;
+                    if (!isppNeighbor (pt, cp, ishori)) {
 						rm.regionID[rm.wid*x +y] = EDGEPT;
 						break;
 					}
@@ -171,7 +181,7 @@ UINT RegionGrow()
 			continue;
 		for (y = yf; y<rm.wid; y++)
 		{
-			if (rm.regionID[rm.wid*x+y]==UNKNOWN && rm.pts[rm.wid*x+y].z>-2 && rm.pts[rm.wid*x+y].z<2) {
+            if (rm.regionID[rm.wid*x+y]==UNKNOWN && rm.pts[rm.wid*x+y].z>-3 && rm.pts[rm.wid*x+y].z<3) {
 				seed.x = x;
 				seed.y = y;
 				GrowOne(seed, _regid);
