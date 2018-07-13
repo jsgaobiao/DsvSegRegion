@@ -158,7 +158,7 @@ void ProcessOneFrame ()
 	//对每一行数据中短暂无效激光点（cnt<5，约水平1度)进行内插补齐，否则这些无效点处会被认为是边界点
 	SmoothingData ();
 
-	//分割
+    //分割出路面区域
 	//第一步：标注边界点ContourExtraction();
 	//第二步：区域增长方式标注区域内点RegionGrow()
 	memset (rm.regionID, 0, sizeof(int)*rm.wid*rm.len);
@@ -170,8 +170,7 @@ void ProcessOneFrame ()
 		rm.segbuf = new SEGBUF[rm.regnum];
 		memset (rm.segbuf, 0, sizeof (SEGBUF)*rm.regnum);
         Region2Seg ();
-	}
-	
+	}	
 	//生成可视化距离图像处理结果
     DrawRangeView ();
 	
@@ -187,10 +186,10 @@ void ProcessOneFrame ()
     //提取道路中心线
     ExtractRoadCenterline (gm);
 
-    //计算地面俯仰和横滚角，分类地形
+    //计算地面俯仰和横滚角，分类地形（上下坡）(只给可通行区域打标签)
     LabelRoadSurface (gm);
 
-    //提取路面上的障碍物
+    //提取路面上的障碍物（凹凸障碍）
     LabelObstacle (gm);
 
 	//生成可视化单帧数据DEM
@@ -204,7 +203,7 @@ void ProcessOneFrame ()
 
 }
 
-//读取一帧vel32数据（一帧为180×12×32个激光点）保存到onefrm->dsv，未作坐标转换
+//读取一帧vel64数据（一帧为580×12×32个激光点）保存到onefrm->dsv，未作坐标转换
 BOOL ReadOneDsvFrame ()
 {
 	DWORD	dwReadBytes;
@@ -296,9 +295,12 @@ void DoProcessing()
         cvShowImage("range image",col);
         cvResize (rm.lMap, col);  // 分割图像 可视化
         cvShowImage("region",col);
+        cv::Mat zmapRGB;
+        cv::applyColorMap(cvarrToMat(gm.zmap), zmapRGB, cv::COLORMAP_HOT);
         if (dm.lmap) cvShowImage("ldemlab",dm.lmap);    // 单帧 可行驶区域
-        if (gm.lmap) cvShowImage("gdemlab",gm.lmap);    // 多帧 可行驶区域 不可行驶区域（高于/低于路面）
-        if (gm.smap) cvShowImage("gsublab",gm.smap);    // 行驶区域结果 可行驶区域 正负障碍
+//        if (dm.zmap) cv::imshow("zdem", zmapRGB);      // 高程图
+        if (gm.lmap) cvShowImage("gdemlab",gm.lmap);    // 多帧 可行驶区域 凹凸障碍
+        if (gm.smap) cvShowImage("gsublab",gm.smap);    // 属性图
 
         cv::setMouseCallback("gsublab", CallbackLocDem, 0);
 

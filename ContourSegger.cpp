@@ -22,13 +22,16 @@ bool isppNeighbor (point3fi *pt, point3fi *cp, bool ishori)
 
     bool isneighbor=false;
     double dz = fabs(pt->z-cp->z);
+    // 高度差小
     if (dz<0.1)
         isneighbor = true;
     else {
         double dh = sqrt(sqr(pt->x-cp->x)+sqr(pt->y-cp->y));
+        // 高度差大，水平距离小 --> 比较陡
         if (dh<0.56)
             isneighbor = false;
         else {
+            // 坡度
             double ang = atan2(dz, dh);
             if (ang<0.17)		//5deg
                 isneighbor = true;
@@ -78,7 +81,7 @@ bool AddPoints(IMCOORDINATE seed,vector<IMCOORDINATE> & vec, int _regid)
 	return true;
 }
 
-void ContourExtraction ()
+void    ContourExtraction ()
 {
 	point3fi *cp,*pt;
 	int x,y,xx,yy;
@@ -109,6 +112,7 @@ void ContourExtraction ()
 					if (!pt->i)
 						continue;
 
+                    // 判断是否是上下两个像素
                     bool ishori = (yy == y) ? false : true;
                     if (!isppNeighbor (pt, cp, ishori)) {
 						rm.regionID[rm.wid*x +y] = EDGEPT;
@@ -131,6 +135,7 @@ void GrowOne(IMCOORDINATE seed, UINT _regid)
 	Vec1.clear();
 	Vec2.clear();
 	Vec1.push_back(seed);
+    // 循环队列BFS
 	while (1)
 	{
 		switch (isVec1)
@@ -173,25 +178,24 @@ UINT RegionGrow()
 	for (x=0; x<rm.len; x++)
 	{
 		for (yf = 0; yf<rm.wid; yf++) {
-			if (rm.pts[rm.wid*x+yf].i)
-//			if (rm.pts[yf].i)			//this error was corrected on Mar.25,2018
+            if (rm.pts[rm.wid*x+yf].i)
 				break;
 		}
 		if(yf >= rm.wid)
 			continue;
 		for (y = yf; y<rm.wid; y++)
 		{
+            // 如果是未标记过的点，且在路面高度范围内
             if (rm.regionID[rm.wid*x+y]==UNKNOWN && rm.pts[rm.wid*x+y].z>-3 && rm.pts[rm.wid*x+y].z<3) {
 				seed.x = x;
 				seed.y = y;
+                // 区域增长
 				GrowOne(seed, _regid);
 				_regid++;
 			}
 		}
 	}
-
 	return _regid-1;
-	
 }
 
 
@@ -234,16 +238,16 @@ void Region2Seg ()
 				continue;
 
 			segbuf = &rm.segbuf[regionid];
-
+            // center point
 			segbuf->cp.x += rm.pts[y*rm.wid+x].x;
 			segbuf->cp.y += rm.pts[y*rm.wid+x].y;
 			segbuf->cp.z += rm.pts[y*rm.wid+x].z;
-
+            // min/max x/y
 			segbuf->dmin.x = min (segbuf->dmin.x, x);
 			segbuf->dmin.y = min (segbuf->dmin.y, y);
 			segbuf->dmax.x = max (segbuf->dmax.x, x);
 			segbuf->dmax.y = max (segbuf->dmax.y, y);
-
+            // min/max(x,y,z) point
 			if (segbuf->minxp.x>rm.pts[y*rm.wid+x].x) 
 				segbuf->minxp = rm.pts[y*rm.wid+x];
 			if (segbuf->minyp.y>rm.pts[y*rm.wid+x].y) 

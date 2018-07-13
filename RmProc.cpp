@@ -19,16 +19,19 @@ void DrawRangeView ()
 				rm.rMap->imageData[(y*rm.wid+x)*3+2] = 255;
 				continue;
 			}
-			if (rm.pts[y*rm.wid+x].z<0.0) {
-				rm.rMap->imageData[(y*rm.wid+x)*3] = 0;
+            // À¶É«
+            if (rm.pts[y*rm.wid+x].z<0.0) {
+                rm.rMap->imageData[(y*rm.wid+x)*3] = BOUND(nint(-rm.pts[y*rm.wid+x].z*100.0),0,255);
 				rm.rMap->imageData[(y*rm.wid+x)*3+1] = 0;
-				rm.rMap->imageData[(y*rm.wid+x)*3+2] = BOUND(nint(-rm.pts[y*rm.wid+x].z*100.0),0,255);
+                rm.rMap->imageData[(y*rm.wid+x)*3+2] = 0;
 			}
+            // ºìÉ«
 			else {
-				rm.rMap->imageData[(y*rm.wid+x)*3] = BOUND(nint(rm.pts[y*rm.wid+x].z*100.0),0,255);
+                rm.rMap->imageData[(y*rm.wid+x)*3] = 0;
 				rm.rMap->imageData[(y*rm.wid+x)*3+1] = 0;
-				rm.rMap->imageData[(y*rm.wid+x)*3+2] = 0;
+                rm.rMap->imageData[(y*rm.wid+x)*3+2] = BOUND(nint(rm.pts[y*rm.wid+x].z*100.0),0,255);
 			}
+            // Seg image
 			if (rm.regionID[y*rm.wid+x]==EDGEPT) {
 				rm.lMap->imageData[(y*rm.wid+x)*3+2]	= 128;
 				rm.lMap->imageData[(y*rm.wid+x)*3+1]	= 128;
@@ -49,9 +52,9 @@ void DrawRangeView ()
 			else {
 				SEGBUF *segbuf = &rm.segbuf[rm.regionID[y*rm.wid+x]];
 				if (segbuf->ptnum) {
-					rm.lMap->imageData[(y*rm.wid+x)*3+0]	= nint(fabs(segbuf->norm.x)*255.0);
-					rm.lMap->imageData[(y*rm.wid+x)*3+1]	= nint(fabs(segbuf->norm.y)*255.0);
-					rm.lMap->imageData[(y*rm.wid+x)*3+2]	= nint(segbuf->norm.z*255.0);
+                    rm.lMap->imageData[(y*rm.wid+x)*3+0]	= nint(fabs(segbuf->norm.x)*255.0);
+                    rm.lMap->imageData[(y*rm.wid+x)*3+1]	= nint(fabs(segbuf->norm.y)*255.0);
+                    rm.lMap->imageData[(y*rm.wid+x)*3+2]	= nint(segbuf->norm.z*255.0);
 				}
 			}
 		}
