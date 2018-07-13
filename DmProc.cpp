@@ -95,24 +95,24 @@ void DrawDem (DMAP &m)
             for (x=0; x<m.wid; x++) {
                 // 不可通行区域的障碍标签
                 if (m.sublab[y*m.wid+x]==UNKNOWN) {
-//                    if (m.lab[y*m.wid+x]==UNKNOWN)
+                    if (m.lab[y*m.wid+x]==UNKNOWN)
                         continue;
                     // 如果 有道路中心线（累计图）
-//                    if (m.centerln) {
-//                        if (m.demhmax[y*m.wid+x] > m.centerln[y].h + POSOBSMINHEIGHT) {
-//                            // 正障碍，红色
-//                            m.smap->imageData[(y*m.wid+x)*3] = 0;
-//                            m.smap->imageData[(y*m.wid+x)*3+1] =0;
-//                            m.smap->imageData[(y*m.wid+x)*3+2] = 255;
-//                        }
-//                        else
-//                        if (m.demhmin[y*m.wid+x] < m.centerln[y].h - POSOBSMINHEIGHT) {
-//                            //负障碍，蓝色
-//                            m.smap->imageData[(y*m.wid+x)*3] = 255;
-//                            m.smap->imageData[(y*m.wid+x)*3+1] =0;
-//                            m.smap->imageData[(y*m.wid+x)*3+2] = 0;
-//                        }
-//                    }
+                    if (m.centerln) {
+                        if (m.demhmax[y*m.wid+x] > m.centerln[y].h + POSOBSMINHEIGHT) {
+                            // 正障碍，红色
+                            m.smap->imageData[(y*m.wid+x)*3] = 0;
+                            m.smap->imageData[(y*m.wid+x)*3+1] =0;
+                            m.smap->imageData[(y*m.wid+x)*3+2] = 255;
+                        }
+                        else
+                        if (m.demhmin[y*m.wid+x] < m.centerln[y].h - POSOBSMINHEIGHT) {
+                            //负障碍，蓝色
+                            m.smap->imageData[(y*m.wid+x)*3] = 255;
+                            m.smap->imageData[(y*m.wid+x)*3+1] =0;
+                            m.smap->imageData[(y*m.wid+x)*3+2] = 0;
+                        }
+                    }
                 }
                 // 可通行区域的标签
                 if (m.sublab[y*m.wid+x]==FLATGROUND || m.lab[y*m.wid+x]==TRAVESABLE) {
@@ -123,15 +123,15 @@ void DrawDem (DMAP &m)
                 }
                 else if (m.sublab[y*m.wid+x]==DOWNSLOPE) {
                     //下坡(方块化，需要调试)
-                    m.smap->imageData[(y*m.wid+x)*3] = 128; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
-                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
-                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
+//                    m.smap->imageData[(y*m.wid+x)*3] = 128; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
+//                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
+//                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
                 }
                 else if (m.sublab[y*m.wid+x]==UPSLOPE) {
                     //上坡(方块化，需要调试)
-                    m.smap->imageData[(y*m.wid+x)*3] = 64; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
-                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
-                    m.smap->imageData[(y*m.wid+x)*3+2] = 255;
+//                    m.smap->imageData[(y*m.wid+x)*3] = 64; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
+//                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
+//                    m.smap->imageData[(y*m.wid+x)*3+2] = 255;
                 }
                 else if (m.sublab[y*m.wid+x]==LEFTSIDESLOPE) {
                     //左斜坡
@@ -147,15 +147,15 @@ void DrawDem (DMAP &m)
                 }
                 else if (m.sublab[y*m.wid+x]==NEGATOBSTA) {
                     //负障碍 蓝色
-                    m.smap->imageData[(y*m.wid+x)*3] = 255;
-                    m.smap->imageData[(y*m.wid+x)*3+1] =0;
-                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
+//                    m.smap->imageData[(y*m.wid+x)*3] = 255;
+//                    m.smap->imageData[(y*m.wid+x)*3+1] =0;
+//                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
                 }
                 else if (m.sublab[y*m.wid+x]==POSSIOBSTA) {
                     //正障碍 红色
-                    m.smap->imageData[(y*m.wid+x)*3] = 0;
-                    m.smap->imageData[(y*m.wid+x)*3+1] =0;
-                    m.smap->imageData[(y*m.wid+x)*3+2] = 255;
+//                    m.smap->imageData[(y*m.wid+x)*3] = 0;
+//                    m.smap->imageData[(y*m.wid+x)*3+1] =0;
+//                    m.smap->imageData[(y*m.wid+x)*3+2] = 255;
                 }
             }
         }

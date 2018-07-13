@@ -298,8 +298,8 @@ void DoProcessing()
         cv::Mat zmapRGB;
         cv::applyColorMap(cvarrToMat(gm.zmap), zmapRGB, cv::COLORMAP_HOT);
         if (dm.lmap) cvShowImage("ldemlab",dm.lmap);    // 单帧 可行驶区域
-//        if (dm.zmap) cv::imshow("zdem", zmapRGB);      // 高程图
-        if (gm.lmap) cvShowImage("gdemlab",gm.lmap);    // 多帧 可行驶区域 凹凸障碍
+        if (dm.zmap) cv::imshow("zdem", zmapRGB);      // 高程图
+//        if (gm.lmap) cvShowImage("gdemlab",gm.lmap);    // 多帧 可行驶区域 凹凸障碍
         if (gm.smap) cvShowImage("gsublab",gm.smap);    // 属性图
 
         cv::setMouseCallback("gsublab", CallbackLocDem, 0);
