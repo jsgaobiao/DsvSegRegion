@@ -9,6 +9,7 @@
 #include <cmath>
 #include <vector>
 #include <fstream>
+#include <algorithm>
 
 //#if _DEBUG
 //#pragma comment(lib, "D:/Program Files/opencv/build/x86/vc14/lib/opencv_highgui2413d.lib")

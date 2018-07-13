@@ -295,11 +295,14 @@ void DoProcessing()
         cvShowImage("range image",col);
         cvResize (rm.lMap, col);  // 分割图像 可视化
         cvShowImage("region",col);
-        cv::Mat zmapRGB;
+        cv::Mat zmapRGB;          // 高程图 伪彩可视化
         cv::applyColorMap(cvarrToMat(gm.zmap), zmapRGB, cv::COLORMAP_HOT);
+        cv::Mat pmapRGB;          // 通行概率图 伪彩可视化
+        cv::applyColorMap(cvarrToMat(gm.pmap), pmapRGB, cv::COLORMAP_BONE);
+
         if (dm.lmap) cvShowImage("ldemlab",dm.lmap);    // 单帧 可行驶区域
-        if (dm.zmap) cv::imshow("zdem", zmapRGB);      // 高程图
-//        if (gm.lmap) cvShowImage("gdemlab",gm.lmap);    // 多帧 可行驶区域 凹凸障碍
+        if (gm.zmap) cv::imshow("zdem", zmapRGB);      // 高程图
+        if (gm.pmap) cv::imshow("gdemlab", pmapRGB);    // 多帧 可行驶概率图
         if (gm.smap) cvShowImage("gsublab",gm.smap);    // 属性图
 
         cv::setMouseCallback("gsublab", CallbackLocDem, 0);

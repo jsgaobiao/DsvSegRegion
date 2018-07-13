@@ -33,6 +33,9 @@ void DrawDem (DMAP &m)
         if (!m.lmap)
             m.lmap = cvCreateImage(cvSize(m.wid,m.len), IPL_DEPTH_8U, 3);
         cvZero(m.lmap);
+        if (!m.pmap)
+            m.pmap = cvCreateImage(cvSize(m.wid,m.len), IPL_DEPTH_8U, 1);
+        cvZero(m.pmap);
 
         // 可视化lab 可通行区域 和 不可通行区域
         int x, y;
@@ -46,6 +49,7 @@ void DrawDem (DMAP &m)
                     m.lmap->imageData[(y*m.wid+x)*3] = 0;
                     m.lmap->imageData[(y*m.wid+x)*3+1] =55+200*pr;
                     m.lmap->imageData[(y*m.wid+x)*3+2] = 0;
+                    m.pmap->imageData[y*m.wid+x] = std::min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
                 }
                 //不可通行区域
                 else {
@@ -56,6 +60,7 @@ void DrawDem (DMAP &m)
                             m.lmap->imageData[(y*m.wid+x)*3] = 0;
                             m.lmap->imageData[(y*m.wid+x)*3+1] =0;
                             m.lmap->imageData[(y*m.wid+x)*3+2] = 55+200*pr;
+                            m.pmap->imageData[y*m.wid+x] = - min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
                         }
                         else
                         if (m.demhmin[y*m.wid+x] < m.centerln[y].h - POSOBSMINHEIGHT) {
@@ -63,12 +68,14 @@ void DrawDem (DMAP &m)
                             m.lmap->imageData[(y*m.wid+x)*3] = 55+200*pr;
                             m.lmap->imageData[(y*m.wid+x)*3+1] =0;
                             m.lmap->imageData[(y*m.wid+x)*3+2] = 0;
+                            m.pmap->imageData[y*m.wid+x] = - min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
                         }
                         else {
                             //与道路同高度，按TRAVESABLE可视化
                             m.lmap->imageData[(y*m.wid+x)*3] = 0;
                             m.lmap->imageData[(y*m.wid+x)*3+1] = 55+200*pr;
                             m.lmap->imageData[(y*m.wid+x)*3+2] = 0;
+                            m.pmap->imageData[y*m.wid+x] = min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
                         }
                     }
                     // 如果 没有道路中心线（单帧图）
@@ -77,6 +84,7 @@ void DrawDem (DMAP &m)
                         m.lmap->imageData[(y*m.wid+x)*3] = 55+200*pr;
                         m.lmap->imageData[(y*m.wid+x)*3+1] =0;
                         m.lmap->imageData[(y*m.wid+x)*3+2] = 55+200*pr;
+                        m.pmap->imageData[y*m.wid+x] = - min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
                     }
                 }
             }
