@@ -22,6 +22,8 @@
 //#endif
 
 #include <opencv2/opencv.hpp>
+//#include <P_DWDX_INFOn.hh>
+//#include <P_PointCloud2n.hh>
 
 using namespace std;
 using namespace cv;
@@ -161,9 +163,9 @@ typedef struct {
     IplImage		*lMap;      // region segmentation image
 } RMAP;
 
-#define	WIDSIZ		120.0
-#define	LENSIZ		200.0
-#define	PIXSIZ		0.25
+#define	WIDSIZ		60.0
+#define	LENSIZ		100.0
+#define	PIXSIZ		0.15        //0.25
 #define	POSOBSMINHEIGHT	0.6		//0.6m
 #define	VEHICLEHEIGHT	3.0		//3.0m
 #define	NEARVEHICLEDIS	6.0		//5.0m

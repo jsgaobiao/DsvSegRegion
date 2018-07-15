@@ -4,7 +4,7 @@ extern RMAP	rm;
 extern TRANSINFO calibInfo;
 extern ONEDSVFRAME	*onefrm;
 
-void DrawDem (DMAP &m)
+void  DrawDem (DMAP &m)
 {
     // 计算高程图
     if (!m.zmap)
@@ -129,17 +129,18 @@ void DrawDem (DMAP &m)
                     m.smap->imageData[(y*m.wid+x)*3+1] =255;
                     m.smap->imageData[(y*m.wid+x)*3+2] = 0;
                 }
-                else if (m.sublab[y*m.wid+x]==DOWNSLOPE) {
+                // else
+                if (m.sublab[y*m.wid+x]==DOWNSLOPE) {
                     //下坡(方块化，需要调试)
-//                    m.smap->imageData[(y*m.wid+x)*3] = 128; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
-//                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
-//                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
+                    m.smap->imageData[(y*m.wid+x)*3] = 128; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
+                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
+                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
                 }
                 else if (m.sublab[y*m.wid+x]==UPSLOPE) {
                     //上坡(方块化，需要调试)
-//                    m.smap->imageData[(y*m.wid+x)*3] = 64; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
-//                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
-//                    m.smap->imageData[(y*m.wid+x)*3+2] = 255;
+                    m.smap->imageData[(y*m.wid+x)*3] = 64; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
+                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
+                    m.smap->imageData[(y*m.wid+x)*3+2] = 255;
                 }
                 else if (m.sublab[y*m.wid+x]==LEFTSIDESLOPE) {
                     //左斜坡
@@ -269,10 +270,8 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
     int x, y;
     for (y=0; y<gmtmp.len; y++) {
         for (x=0; x<gmtmp.wid; x++) {
-
             if (!gmtmp.lab[y*gmtmp.wid+x])
                 continue;
-
             if (gmtmp.lpr[y*gmtmp.wid+x]<0.2)   // probability of the lab
                 continue;
 
@@ -368,12 +367,13 @@ void UpdateGloDem (DMAP &glo, DMAP &loc)
             }
             // 相同标签，加强
             else if (loc.lab[dy*loc.wid+dx] == glo.lab[gy*glo.wid+gx]) {
-                fac = loc.lpr[dy*loc.wid+dx]/0.5*5.0;
+                fac = loc.lpr[dy*loc.wid+dx] * 2.0; // /0.5*5.0;
                 glo.lpr[gy*glo.wid+gx] = min (1.0, glo.lpr[gy*glo.wid+gx]*fac);
             }
             // 不同标签，竞争
             else { //if (loc.lab[dy*loc.wid+dx] != glo.lab[gy*glo.wid+gx])
-                fac = 0.5/loc.lpr[dy*loc.wid+dx];
+//                fac = 0.5/loc.lpr[dy*loc.wid+dx];
+                fac = loc.lpr[dy*loc.wid+dx] / 2.0;
                 glo.lpr[gy*glo.wid+gx] = min (1.0, glo.lpr[gy*glo.wid+gx]*fac);
                 if (glo.lpr[gy*glo.wid+gx]<0.2) {
                     glo.lab[gy*glo.wid+gx] = loc.lab[dy*loc.wid+dx];
@@ -639,11 +639,10 @@ void LabelRoadSurface (DMAP &glo)
 
     for (y=0; y<glo.len; y++) {
         for (x=0; x<glo.wid; x++) {
-
             if (glo.lab[y*glo.wid+x]!=TRAVESABLE || glo.sublab[y*glo.wid+x])
                 continue;
-
             num=0;
+            // 用邻域内的点做平面拟合
             for (yy=y; yy<min(y+10,glo.len); yy++) {
                 for (xx=x; xx<min(x+10,glo.wid); xx++) {
                     if (glo.lab[yy*glo.wid+xx]!=TRAVESABLE)
@@ -671,17 +670,17 @@ void LabelRoadSurface (DMAP &glo)
                 cx = cos (ax);
                 ay = atan2 (Equation[0]/cx, Equation[2]/cx);
                 if (fabs(ax)>fabs(ay)) {
-                    if (ax>0.174)					//10deg
+                    if (ax>0.174 * 4)				//10deg
                         sublab = UPSLOPE;           // 上坡
-                    else if (ax<-0.174)
+                    else if (ax<-0.174 * 4)
                         sublab = DOWNSLOPE;         // 下坡
                     else
                         sublab = FLATGROUND;        // 平地
                 }
                 else {
-                    if (ay>0.174)
+                    if (ay>0.174 * 4)
                         sublab = RIGHTSIDESLOPE;    // 右斜坡
-                    else if (ax<-0.174)
+                    else if (ax<-0.174 * 4)
                         sublab = LEFTSIDESLOPE;     // 左斜坡
                     else
                         sublab = FLATGROUND;        // 平地

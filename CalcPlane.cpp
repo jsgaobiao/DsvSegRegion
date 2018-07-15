@@ -26,8 +26,6 @@ void tqli(double d[3], double e[3], double z[3][3]);
 **	the four variables a,b,c and d (in "Plane_Eq") indicating the
 **	equation of the best-fit plane to the set of points.  (aX+bY+cZ+d = 0)
 */
-
-
 void Calculate_Plane(int Points_Total, double *X_Coord, double *Y_Coord, double *Z_Coord,
 					 int Origin_Flag, double Plane_Eq[4])
 {

@@ -100,7 +100,7 @@ void CorrectPoints ()
 	//transform points to the vehicle frame of onefrm->dsv[0]
 	//src: block i; tar: block 0
 
-	//rot2: R_tar^{-1}
+    //rot2: R_tar^{-1}
 	rot2[0][0] = cos (-onefrm->dsv[0].ang.z);
 	rot2[0][1] = -sin (-onefrm->dsv[0].ang.z);
 	rot2[1][0] = sin (-onefrm->dsv[0].ang.z);
@@ -166,7 +166,7 @@ void ProcessOneFrame ()
 	ContourSegger ();
 	
 	//为每个区域生成一个segbuf，用于分类、目前仅提取了少量特征
-	if (rm.regnum) {
+    if (rm.regnum) {
 		rm.segbuf = new SEGBUF[rm.regnum];
 		memset (rm.segbuf, 0, sizeof (SEGBUF)*rm.regnum);
         Region2Seg ();
@@ -195,7 +195,7 @@ void ProcessOneFrame ()
 	//生成可视化单帧数据DEM
 	DrawDem (dm);
 
-	//生成可视化全局DEM
+    //生成可视化全局DEM
 	DrawDem (gm);
 
 	if (rm.segbuf)
@@ -208,18 +208,15 @@ BOOL ReadOneDsvFrame ()
 {
 	DWORD	dwReadBytes;
 	int		i;
-
     for (i=0; i<BKNUM_PER_FRM; i++) {
         dwReadBytes = fread((ONEDSVDATA *)&onefrm->dsv[i], 1, dsbytesiz, dfp);
         if ((dsbytesiz != dwReadBytes) || (ferror(dfp))) {
             printf("Error from reading file.\n");
 			break;
         }
-
 //		createRotMatrix_ZYX(onefrm->dsv[i].rot, onefrm->dsv[i].ang.x, onefrm->dsv[i].ang.y , onefrm->dsv[i].ang.z ) ; 
 		createRotMatrix_ZYX(onefrm->dsv[i].rot, onefrm->dsv[i].ang.x, onefrm->dsv[i].ang.y , 0 ) ; 
 	}
-
 	if (i<BKNUM_PER_FRM)
         return false;
 	else
@@ -265,7 +262,7 @@ void DoProcessing()
 {
 
     LONGLONG fileSize = myGetFileSize(dfp);
-    dFrmNum = fileSize / 180 / dsbytesiz;
+    dFrmNum = fileSize / 580 / dsbytesiz;
 	InitRmap (&rm);
 	InitDmap (&dm);
 	InitDmap (&gm);
@@ -300,12 +297,12 @@ void DoProcessing()
         cv::Mat pmapRGB;          // 通行概率图 伪彩可视化
         cv::applyColorMap(cvarrToMat(gm.pmap), pmapRGB, cv::COLORMAP_BONE);
 
-        if (dm.lmap) cvShowImage("ldemlab",dm.lmap);    // 单帧 可行驶区域
-        if (gm.zmap) cv::imshow("zdem", zmapRGB);      // 高程图
-        if (gm.pmap) cv::imshow("gdemlab", pmapRGB);    // 多帧 可行驶概率图
-        if (gm.smap) cvShowImage("gsublab",gm.smap);    // 属性图
+        if (dm.lmap) cvShowImage("l_dem",dm.lmap);    // 单帧 可行驶区域
+        if (gm.zmap) cv::imshow("g_zdem", zmapRGB);      // 高程图
+        if (gm.pmap) cv::imshow("g_pdem", pmapRGB);    // 多帧 可行驶概率图
+        if (gm.smap) cvShowImage("g_sublab",gm.smap);    // 属性图
 
-        cv::setMouseCallback("gsublab", CallbackLocDem, 0);
+//        cv::setMouseCallback("gsublab", CallbackLocDem, 0);
 
 		char WaitKey;
 		WaitKey = cvWaitKey(waitkeydelay);

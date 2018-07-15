@@ -13,7 +13,10 @@ SOURCES += \
 
 HEADERS += \
     ContourSegger.h \
-    define.h
+    define.h \
+    P_DWDX_INFOn.hh \
+    P_PointCloud2n.hh \
+    rcsheadern.hh
 
 INCLUDEPATH += /usr/local/include
 LIBS += -L/usr/local/lib/ -lopencv_core -lopencv_imgcodecs -lopencv_highgui -lopencv_imgproc -lopencv_videoio -lopencv_viz
