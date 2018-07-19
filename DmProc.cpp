@@ -3,6 +3,7 @@
 extern RMAP	rm;
 extern TRANSINFO calibInfo;
 extern ONEDSVFRAME	*onefrm;
+int cntFlag = 0;
 
 void  DrawDem (DMAP &m)
 {
@@ -132,15 +133,15 @@ void  DrawDem (DMAP &m)
                 // else
                 if (m.sublab[y*m.wid+x]==DOWNSLOPE) {
                     //下坡(方块化，需要调试)
-                    m.smap->imageData[(y*m.wid+x)*3] = 128; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
-                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
-                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
+//                    m.smap->imageData[(y*m.wid+x)*3] = 128; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
+//                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
+//                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
                 }
                 else if (m.sublab[y*m.wid+x]==UPSLOPE) {
                     //上坡(方块化，需要调试)
-                    m.smap->imageData[(y*m.wid+x)*3] = 64; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
-                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
-                    m.smap->imageData[(y*m.wid+x)*3+2] = 255;
+//                    m.smap->imageData[(y*m.wid+x)*3] = 64; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
+//                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
+//                    m.smap->imageData[(y*m.wid+x)*3+2] = 255;
                 }
                 else if (m.sublab[y*m.wid+x]==LEFTSIDESLOPE) {
                     //左斜坡
@@ -235,6 +236,10 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
     if (!gmtar.dataon)
         return;
 
+//    DrawDem (gmtar);
+//    cv::Mat cvgmtar = cvarrToMat(gmtar.lmap).clone();
+//    imshow("t0", cvgmtar);
+
     //gmtar is the data of the previous frame
     //copy gmtar to gmtmp
     CopyGloDem (&gmtmp, &gmtar);
@@ -246,14 +251,21 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
     gmtar.trans.shv.x = onefrm->dsv[0].shv.x;
     gmtar.trans.shv.y = onefrm->dsv[0].shv.y;
 
+//    cntFlag ++;
+//    if (cntFlag == 1) {
+//        gmtar.trans.ang = gmtmp.trans.ang;
+//        gmtar.trans.shv.x = gmtmp.trans.shv.x + 10;
+//        gmtar.trans.shv.y = gmtmp.trans.shv.y + 10;
+//    }
+
     //estimation for transformation
     MAT2D	rot1, rot2;
 
     //rot1: R_gmtar^{-1}*R_gmtmp, srctrans:gmtmp, tartrans:gmtar
-    rot1[0][0] = cos (gmtmp.trans.ang-gmtar.trans.ang);
-    rot1[0][1] = -sin (gmtmp.trans.ang-gmtar.trans.ang);
-    rot1[1][0] = sin (gmtmp.trans.ang-gmtar.trans.ang);
-    rot1[1][1] = cos (gmtmp.trans.ang-gmtar.trans.ang);
+    rot1[0][0] = cos (gmtmp.trans.ang - gmtar.trans.ang);
+    rot1[0][1] = -sin (gmtmp.trans.ang - gmtar.trans.ang);
+    rot1[1][0] = sin (gmtmp.trans.ang - gmtar.trans.ang);
+    rot1[1][1] = cos (gmtmp.trans.ang - gmtar.trans.ang);
 
     //rot2: R_gmtar^{-1}
     rot2[0][0] = cos (-gmtar.trans.ang);
@@ -265,6 +277,7 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
     point2d shv;
     shv.x = gmtmp.trans.shv.x-gmtar.trans.shv.x;
     shv.y = gmtmp.trans.shv.y-gmtar.trans.shv.y;
+    rotatePoint2d (shv, rot2);	//R_t^{-1}*(SHV_{t-1}-SHV_{t})
 
     //transform from the frame of gmtmp to gmtar
     int x, y;
@@ -279,20 +292,19 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
             p.x = (x-gmtmp.wid/2)*PIXSIZ;
             p.y = (y-gmtmp.len/2)*PIXSIZ;
             rotatePoint2d (p, rot1);	//R_t^{-1}*R_{t-1}*p
-            rotatePoint2d (shv, rot2);	//R_t^{-1}*(SHV_{t-1}-SHV_{t})
             shiftPoint2d (p, shv);		//p'=R_t^{-1}*R_{t-1}*p+R_t^{-1}*(SHV_{t-1}-SHV_{t})
 
             p.x = p.x/PIXSIZ+gmtar.wid/2;
             p.y = p.y/PIXSIZ+gmtar.len/2;
             int x0, y0, x1, y1;
-            x0 = int(p.x); y0 = int(p.y);
-            x1 = int(p.x)+1; y1 = int(p.y)+1;
+            x0 = int(p.x)-0; y0 = int(p.y)-0;
+            x1 = int(p.x)+0; y1 = int(p.y)+0;
             for (int yy=y0; yy<=y1; yy++) {
                 if (yy<0 || yy>=gmtar.len) continue;
                 for (int xx=x0; xx<=x1; xx++) {
                     if (xx<0 || xx>=gmtar.wid) continue;
                     double dd=sqrt(double((xx-p.x)*(xx-p.x)+(yy-p.y)*(yy-p.y)));
-                    double fac=(1.0-dd/1.414)*0.8;//0.8;
+                    double fac=0.85;//(1.0-dd/1.415)*0.9;
                     int dn;
                     double lpr = gmtmp.lpr[y*gmtmp.wid+x]*fac;
                     if (lpr<0.2) continue;
@@ -340,6 +352,10 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
             }
         }
     }
+//    DrawDem (gmtar);
+//    cv::Mat cvgmtar1 = cvarrToMat(gmtar.lmap).clone();
+//    imshow("t1", cvgmtar1);
+//    cv::waitKey(0);
 }
 
 
@@ -350,7 +366,6 @@ void UpdateGloDem (DMAP &glo, DMAP &loc)
         glo.dataon = true;
         return;
     }
-
     double fac;
     int dx, dy;
     for (dy=0; dy<loc.len; dy++) {
@@ -491,7 +506,8 @@ void GenerateLocDem (DMAP &loc)
     for (y=0; y<loc.len; y++) {
         for (x=0; x<loc.wid; x++) {
             // 无观测，跳过
-            if (!loc.demgnum[y*loc.wid+x] && !loc.demhnum[y*loc.wid+x]) continue;
+            if (!loc.demgnum[y*loc.wid+x] && !loc.demhnum[y*loc.wid+x])
+                continue;
             else if (loc.demgnum[y*loc.wid+x] && !loc.demhnum[y*loc.wid+x]) {
                 //可通行区域（有地面，无障碍）
                 loc.lab[y*loc.wid+x] = TRAVESABLE;

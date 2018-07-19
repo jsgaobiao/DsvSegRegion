@@ -1,3 +1,7 @@
+#include <rcs.hh>
+//#include <P_CGQHDL64E_INFOn.hh>
+//#include <P_DWDX_INFOn.hh>
+
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -22,8 +26,6 @@
 //#endif
 
 #include <opencv2/opencv.hpp>
-//#include <P_DWDX_INFOn.hh>
-//#include <P_PointCloud2n.hh>
 
 using namespace std;
 using namespace cv;
@@ -163,9 +165,9 @@ typedef struct {
     IplImage		*lMap;      // region segmentation image
 } RMAP;
 
-#define	WIDSIZ		60.0
-#define	LENSIZ		100.0
-#define	PIXSIZ		0.15        //0.25
+#define	WIDSIZ		30.0
+#define	LENSIZ		65.0
+#define	PIXSIZ		0.10        //0.25
 #define	POSOBSMINHEIGHT	0.6		//0.6m
 #define	VEHICLEHEIGHT	3.0		//3.0m
 #define	NEARVEHICLEDIS	6.0		//5.0m
@@ -226,6 +228,7 @@ typedef struct {
 //extern TRANSINFO calibInfo;
 //extern ONEDSVFRAME	*onefrm;
 
+void DoProcessing();
 void rMatrixInit (MATRIX &rt);
 void rMatrixmulti (MATRIX &r, MATRIX &rt);
 void createRotMatrix_ZYX (MATRIX &rt, double rotateX, double rotateY, double rotateZ);

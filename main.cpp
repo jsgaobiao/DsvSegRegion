@@ -7,6 +7,7 @@ FILE    *dfp;
 int		dsbytesiz = sizeof (point3d)*2 + sizeof (ONEVDNDATA);
 int		dFrmNum=0;
 int		dFrmNo=0;
+int     idxRcsPointCloud=0;
 
 RMAP	rm;
 DMAP	dm;
@@ -104,7 +105,7 @@ void CorrectPoints ()
 	rot2[0][0] = cos (-onefrm->dsv[0].ang.z);
 	rot2[0][1] = -sin (-onefrm->dsv[0].ang.z);
 	rot2[1][0] = sin (-onefrm->dsv[0].ang.z);
-	rot2[1][1] = cos (-onefrm->dsv[0].ang.z);
+    rot2[1][1] = cos (-onefrm->dsv[0].ang.z);
 
 	for (int i=1; i<BKNUM_PER_FRM; i++) {
 		for (int j=0; j<PTNUM_PER_BLK; j++) {
@@ -174,14 +175,14 @@ void ProcessOneFrame ()
 	//生成可视化距离图像处理结果
     DrawRangeView ();
 	
-	//将全局DEM转换到当前车体坐标系下
-	PredictGloDem (gm,ggm);
+    //将全局DEM转换到当前车体坐标系下
+    PredictGloDem (gm,ggm);
 
 	//生成单帧数据的DEM
 	GenerateLocDem (dm);
 
-	//用当前帧DEM更新全局DEM
-	UpdateGloDem (gm,dm);
+    //用当前帧DEM更新全局DEM
+    UpdateGloDem (gm,dm);
 
     //提取道路中心线
     ExtractRoadCenterline (gm);
@@ -223,6 +224,48 @@ BOOL ReadOneDsvFrame ()
         return true;
 }
 
+//point3fi GetNextRcsPoint(P_CGQHDL64E_INFO_MSG &pc)
+//{
+//    if (idxRcsPointCloud > pc.data.size()) {
+//        return point3fi(0,0,0,0);
+//    }
+//    point3fi ret;
+//    ret.x = (pc.data[idxRcsPointCloud] << 3) +
+//            (pc.data[idxRcsPointCloud + 1] << 2) +
+//            (pc.data[idxRcsPointCloud + 2] << 1) +
+//            (pc.data[idxRcsPointCloud + 3]);
+//    idxRcsPointCloud += 4;
+//    ret.y = (pc.data[idxRcsPointCloud] << 3) +
+//            (pc.data[idxRcsPointCloud + 1] << 2) +
+//            (pc.data[idxRcsPointCloud + 2] << 1) +
+//            (pc.data[idxRcsPointCloud + 3]);
+//    idxRcsPointCloud += 4;
+//    ret.z = (pc.data[idxRcsPointCloud] << 3) +
+//            (pc.data[idxRcsPointCloud + 1] << 2) +
+//            (pc.data[idxRcsPointCloud + 2] << 1) +
+//            (pc.data[idxRcsPointCloud + 3]);
+//    idxRcsPointCloud += 4;
+//    ret.i = pc.data[idxRcsPointCloud];
+//    idxRcsPointCloud += 1;
+//    return ret;
+//}
+
+//BOOL ReadRcsData(P_CGQHDL64E_INFO_MSG &pc, P_DWDX_INFO_MSG &dwdx)
+//{
+//    int		i;
+//    for (i=0; i<BKNUM_PER_FRM; i++) {
+//        // roll, pitch, yaw
+//        onefrm->dsv[i].ang = point3d((double)dwdx.roll * 0.01, (double)dwdx.pitch * 0.01, (double)dwdx.heading * 0.01);
+//        // time stamp
+//        onefrm->dsv[i].millisec = dwdx.time_stamp;
+//        onefrm->dsv[i].shv = point3d((double)dwdx.global_x * 0.1, (double)dwdx.global_y * 0.1, (double)dwdx.global_h * 0.1);
+//        for (int j = 0; j < PTNUM_PER_BLK; j ++) {
+//            onefrm->dsv[i].points[j] = GetNextRcsPoint(pc);
+//        }
+//        createRotMatrix_ZYX(onefrm->dsv[i].rot, onefrm->dsv[i].ang.x, onefrm->dsv[i].ang.y , 0 ) ;
+//    }
+//}
+
 void CallbackLocDem(int event, int x, int y, int flags, void *ustc)
 {
     static CvPoint lu, rb;
@@ -261,6 +304,18 @@ LONGLONG myGetFileSize(FILE *f)
 void DoProcessing()
 {
 
+    if (!LoadCalibFile ("/home/gaobiao/Documents/201-2018/build-DsvSegRegion-Desktop_Qt_5_10_1_GCC_64bit-Debug/vel.calib")) {
+        printf ("Invalid calibration file\n");
+        getchar ();
+        exit (1);
+    }
+
+    if ((dfp = fopen("/home/gaobiao/Documents/201-2018/build-DsvSegRegion-Desktop_Qt_5_10_1_GCC_64bit-Debug/searching_1.dsv", "r")) == NULL) {
+        printf("File open failure\n");
+        getchar ();
+        exit (1);
+    }
+
     LONGLONG fileSize = myGetFileSize(dfp);
     dFrmNum = fileSize / 580 / dsbytesiz;
 	InitRmap (&rm);
@@ -280,8 +335,8 @@ void DoProcessing()
 		if (dFrmNo%100==0)
 			printf("%d (%d)\n",dFrmNo,dFrmNum);
 
-		//每一帧的处理
-		ProcessOneFrame ();
+        //每一帧的处理
+        ProcessOneFrame ();
 
         //可视化
         char str[10];
@@ -330,43 +385,43 @@ void DoProcessing()
             fseeko64(dfp, dFrmNo * dsbytesiz * BKNUM_PER_FRM, SEEK_SET);
             continue;
         }
-		dFrmNo++;
-	}
+        dFrmNo++;
+    }
 
 	ReleaseRmap (&rm);
 	ReleaseDmap (&dm);
 	ReleaseDmap (&gm);
 	ReleaseDmap (&ggm);
 	cvReleaseImage(&col);
-	delete []onefrm;
+    delete []onefrm;
 }
 
 int main (int argc, char *argv[])
 {
 
-	if (argc<3) {
+    if (argc<3) {
         printf ("Usage : %s [infile] [calibfile]\n", argv[0]);
         printf ("[infile] DSV file.\n");
         printf ("[calibfile] define the calibration parameters of the DSV file.\n");
         printf ("[outfile] segmentation results to DSVL file.\n");
         printf ("[seglog] data association results to LOG file.\n");
         printf ("[videooutflg] 1: output video to default files, 0: no output.\n");
-		exit(1);
-	}
+        exit(1);
+    }
 
-	if (!LoadCalibFile (argv[2])) {
-        printf ("Invalid calibration file : %s.\n", argv[2]);
-		getchar ();
-		exit (1);
-	}
+//    if (!LoadCalibFile (argv[2])) {
+//        printf ("Invalid calibration file : %s.\n", argv[2]);
+//        getchar ();
+//        exit (1);
+//    }
 
-    if ((dfp = fopen(argv[1], "r")) == NULL) {
-		printf("File open failure : %s\n", argv[1]);
-		getchar ();
-		exit (1);
-	}
+//    if ((dfp = fopen(argv[1], "r")) == NULL) {
+//        printf("File open failure : %s\n", argv[1]);
+//        getchar ();
+//        exit (1);
+//    }
 
-	DoProcessing ();
+    DoProcessing ();
 
     printf ("Labeling succeeded.\n");
 
