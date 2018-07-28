@@ -14,6 +14,10 @@ DMAP	dm;
 DMAP	gm, ggm;
 
 ONEDSVFRAME	*onefrm;
+IplImage * col;
+IplImage *demVis;
+CvFont font;
+list<point2d> trajList;
 
 bool LoadCalibFile (char *szFile)
 {
@@ -124,8 +128,8 @@ void CorrectPoints ()
 
 			//shv: SHV_src-SHV_tar
 			point2d shv;
-			shv.x = onefrm->dsv[i].shv.x-onefrm->dsv[0].shv.x;
-			shv.y = onefrm->dsv[i].shv.y-onefrm->dsv[0].shv.y;
+            shv.x = onefrm->dsv[i].shv.x-onefrm->dsv[0].shv.x;
+            shv.y = onefrm->dsv[i].shv.y-onefrm->dsv[0].shv.y;
 
 			point2d pp;
 			pp.x = onefrm->dsv[i].points[j].x; pp.y = onefrm->dsv[i].points[j].y;
@@ -146,6 +150,11 @@ void CorrectPoints ()
 			rm.pts[ry*rm.wid+rx] = onefrm->dsv[i].points[j];
 		}
 	}
+
+    // 记录历史轨迹
+    trajList.push_front(point2d{onefrm->dsv[0].shv.x, onefrm->dsv[0].shv.y});
+    if (trajList.size() > 2000)
+        trajList.pop_back();
 }
 
 void ProcessOneFrame ()
@@ -216,55 +225,14 @@ BOOL ReadOneDsvFrame ()
 			break;
         }
 //		createRotMatrix_ZYX(onefrm->dsv[i].rot, onefrm->dsv[i].ang.x, onefrm->dsv[i].ang.y , onefrm->dsv[i].ang.z ) ; 
-		createRotMatrix_ZYX(onefrm->dsv[i].rot, onefrm->dsv[i].ang.x, onefrm->dsv[i].ang.y , 0 ) ; 
-	}
+        createRotMatrix_ZYX(onefrm->dsv[i].rot, onefrm->dsv[i].ang.x, onefrm->dsv[i].ang.y , 0 ) ;
+    }
 	if (i<BKNUM_PER_FRM)
         return false;
 	else
         return true;
 }
 
-//point3fi GetNextRcsPoint(P_CGQHDL64E_INFO_MSG &pc)
-//{
-//    if (idxRcsPointCloud > pc.data.size()) {
-//        return point3fi(0,0,0,0);
-//    }
-//    point3fi ret;
-//    ret.x = (pc.data[idxRcsPointCloud] << 3) +
-//            (pc.data[idxRcsPointCloud + 1] << 2) +
-//            (pc.data[idxRcsPointCloud + 2] << 1) +
-//            (pc.data[idxRcsPointCloud + 3]);
-//    idxRcsPointCloud += 4;
-//    ret.y = (pc.data[idxRcsPointCloud] << 3) +
-//            (pc.data[idxRcsPointCloud + 1] << 2) +
-//            (pc.data[idxRcsPointCloud + 2] << 1) +
-//            (pc.data[idxRcsPointCloud + 3]);
-//    idxRcsPointCloud += 4;
-//    ret.z = (pc.data[idxRcsPointCloud] << 3) +
-//            (pc.data[idxRcsPointCloud + 1] << 2) +
-//            (pc.data[idxRcsPointCloud + 2] << 1) +
-//            (pc.data[idxRcsPointCloud + 3]);
-//    idxRcsPointCloud += 4;
-//    ret.i = pc.data[idxRcsPointCloud];
-//    idxRcsPointCloud += 1;
-//    return ret;
-//}
-
-//BOOL ReadRcsData(P_CGQHDL64E_INFO_MSG &pc, P_DWDX_INFO_MSG &dwdx)
-//{
-//    int		i;
-//    for (i=0; i<BKNUM_PER_FRM; i++) {
-//        // roll, pitch, yaw
-//        onefrm->dsv[i].ang = point3d((double)dwdx.roll * 0.01, (double)dwdx.pitch * 0.01, (double)dwdx.heading * 0.01);
-//        // time stamp
-//        onefrm->dsv[i].millisec = dwdx.time_stamp;
-//        onefrm->dsv[i].shv = point3d((double)dwdx.global_x * 0.1, (double)dwdx.global_y * 0.1, (double)dwdx.global_h * 0.1);
-//        for (int j = 0; j < PTNUM_PER_BLK; j ++) {
-//            onefrm->dsv[i].points[j] = GetNextRcsPoint(pc);
-//        }
-//        createRotMatrix_ZYX(onefrm->dsv[i].rot, onefrm->dsv[i].ang.x, onefrm->dsv[i].ang.y , 0 ) ;
-//    }
-//}
 
 void CallbackLocDem(int event, int x, int y, int flags, void *ustc)
 {
@@ -289,6 +257,7 @@ void CallbackLocDem(int event, int x, int y, int flags, void *ustc)
     }
 }
 
+// 获取文件大小
 LONGLONG myGetFileSize(FILE *f)
 {
     // set the file pointer to end of file
@@ -300,10 +269,280 @@ LONGLONG myGetFileSize(FILE *f)
     return retSize;
 }
 
-//主处理程序
-void DoProcessing()
+// 绘制历史轨迹
+void DrawTraj(IplImage *img)
 {
+    MAT2D	rot2;
+    list<point2d>::iterator iter;
+    iter = trajList.begin();
+    point2d centerPoint = point2d{iter->x, iter->y};
+    point2i centerPixel = point2i{img->height/2, img->width/2};
 
+    for (iter = trajList.begin(); iter != trajList.end(); iter ++) {
+        point2d tmpPoint;
+        tmpPoint.x = centerPixel.y;
+        tmpPoint.y = centerPixel.x;
+
+        //rot2: R_tar^{-1}
+        rot2[0][0] = cos (-onefrm->dsv[0].ang.z);
+        rot2[0][1] = -sin (-onefrm->dsv[0].ang.z);
+        rot2[1][0] = sin (-onefrm->dsv[0].ang.z);
+        rot2[1][1] = cos (-onefrm->dsv[0].ang.z);
+        printf("yaw: %.2lf\n", onefrm->dsv[0].ang.z);
+
+        //shv: SHV_src-SHV_tar
+        point2d shv;
+        shv.x = (iter->x - centerPoint.x) / PIXSIZ;
+        shv.y = (iter->y - centerPoint.y) / PIXSIZ;
+        printf("centerPoint : (%lf,%lf)\n", centerPoint.x, centerPoint.y);
+        printf("centerPixel : (%d,%d)\n", centerPixel.x, centerPixel.y);
+        printf("shv: (%lf,%lf)\n", shv.x, shv.y);
+
+        rotatePoint2d (shv, rot2);          //R_tar^{-1}*(SHV_src-SHV_tar)
+        shiftPoint2d (tmpPoint, shv);		//p'=R_tar^{-1}*R_src*p+R_tar^{-1}*(SHV_src-SHV_tar)
+        cvCircle(img, cvPoint((int)tmpPoint.x, (int)tmpPoint.y), 3, cv::Scalar(255,255,255), -1, 8);
+        printf("Draw point: (%d,%d)\n\n", (int)tmpPoint.x, (int)tmpPoint.y);
+    }
+}
+
+// 获取下一个激光点数据
+point3fi GetNextRcsPoint(P_CGQHDL64E_INFO_MSG *veloData)
+{
+    /*
+    offset:0 datatype:7 count:1 name:x
+    offset:4 datatype:7 count:1 name:y
+    offset:8 datatype:7 count:1 name:z
+    offset:16 datatype:7 count:1 name:intensity
+    offset:20 datatype:4 count:1 name:ring
+    */
+    point3fi ret;
+    ret.x = ret.y = ret.z = ret.i = 0;
+    if (idxRcsPointCloud >= veloData->data_length) {
+        return ret;
+    }
+    // X
+    unsigned char *p_uchar = (unsigned char *)&ret.x;
+    for (int i = 0; i < 4; i ++) {
+        p_uchar[i] = veloData->data[idxRcsPointCloud + i];
+    }
+    idxRcsPointCloud += 4;
+    // Y
+    p_uchar = (unsigned char *)&ret.y;
+    for (int i = 0; i < 4; i ++) {
+        p_uchar[i] = veloData->data[idxRcsPointCloud + i];
+    }
+    idxRcsPointCloud += 4;
+    // Z
+    p_uchar = (unsigned char *)&ret.z;
+    for (int i = 0; i < 4; i ++) {
+        p_uchar[i] = veloData->data[idxRcsPointCloud + i];
+    }
+    idxRcsPointCloud += 8;
+    // Intensity
+    float tmpIntensity = 0;
+    p_uchar = (unsigned char *)&tmpIntensity;
+    for (int i = 0; i < 4; i ++) {
+        p_uchar[i] = veloData->data[idxRcsPointCloud + i];
+    }
+    ret.i = tmpIntensity;
+    idxRcsPointCloud += 16;
+    // Coordinate transform
+    ret.y *= -1;
+    // 滤除车身上的点
+    if (sqrt(sqr(ret.x)+sqr(ret.y)+sqr(ret.z)) < 3.5)
+        ret = point3fi{0, 0, 0, 0};
+    return ret;
+}
+
+// 读入RCS格式数据，并保存到onefrm中
+BOOL ReadRcsData(P_CGQHDL64E_INFO_MSG *veloData, P_DWDX_INFO_MSG *dwdxData)
+{
+    idxRcsPointCloud = 0;
+    int		i;
+    for (i=0; i<BKNUM_PER_FRM; i++) {
+        // get and convert roll/pitch/yaw to radian
+        onefrm->dsv[i].ang = point3d{(double)dwdxData->roll * 0.01 / 180.0 * M_PI,
+                                    (double)dwdxData->pitch * 0.01 / 180.0 * M_PI,
+                                    (double)dwdxData->heading * 0.01 / 180.0 * M_PI - M_PI/2.0};
+        // time stamp
+        onefrm->dsv[i].millisec = veloData->header.stamp;
+        onefrm->dsv[i].shv = point3d{(double)dwdxData->global_x * 0.1, (double)dwdxData->global_y * 0.1, (double)dwdxData->global_h * 0.1};
+        for (int j = 0; j < PTNUM_PER_BLK; j ++) {
+            onefrm->dsv[i].points[j] = GetNextRcsPoint(veloData);
+        }
+        createRotMatrix_ZYX(onefrm->dsv[i].rot, onefrm->dsv[i].ang.x, onefrm->dsv[i].ang.y , 0 ) ;
+    }
+    return true;
+}
+
+// DoProcessing之前的预处理
+void PrePorcessing()
+{
+    // 读入Velodyne外参标定文件
+    if (!LoadCalibFile ("/home/gaobiao/Documents/201-2018/ANS_test_pku/DsvSegRegion_RCS/vel.calib")) {
+        printf ("Invalid calibration file\n");
+        getchar ();
+        exit (1);
+    }
+    InitRmap (&rm);
+    InitDmap (&dm);
+    InitDmap (&gm);
+    InitDmap (&ggm);
+    onefrm= new ONEDSVFRAME[1];
+    col = cvCreateImage (cvSize (1024, rm.len*3),IPL_DEPTH_8U,3);
+    cvInitFont(&font, CV_FONT_HERSHEY_DUPLEX, 1,1, 0, 2);
+
+    dFrmNo = 0;
+}
+
+// DoProcessing后处理，释放内存空间
+void PostProcessing()
+{
+    ReleaseRmap (&rm);
+    ReleaseDmap (&dm);
+    ReleaseDmap (&gm);
+    ReleaseDmap (&ggm);
+    cvReleaseImage(&col);
+    delete []onefrm;
+}
+
+// 将结果写入demMap
+void WriteDemMap(unsigned long stamp, P_DWDX_INFO_MSG *dwdxData, IplImage* zmap, P_CJDEMMAP_MSG &demMap)
+{
+    demMap.time_stamp = stamp;
+    demMap.fc.time_label = dwdxData->time_stamp;
+    demMap.fc.global_x = dwdxData->global_x;
+    demMap.fc.global_y = dwdxData->global_y;
+    demMap.fc.global_h = dwdxData->global_h;
+    demMap.fc.zone = dwdxData->zone;
+    demMap.fc.heading = dwdxData->heading;
+    demMap.fc.pitch = dwdxData->pitch;
+    demMap.fc.roll = dwdxData->roll;
+    demMap.fc.global_vx = dwdxData->global_vx;
+    demMap.fc.global_vy = dwdxData->global_vy;
+    demMap.fc.global_vh = dwdxData->global_vz;
+    demMap.fc.heading_rate = dwdxData->global_wx;
+    demMap.fc.pitch_rate = dwdxData->global_wy;
+    demMap.fc.roll_rate = dwdxData->global_wz;
+    demMap.fc.longitude = dwdxData->longitude;
+    demMap.fc.latitude = dwdxData->latitude;
+    demMap.map_height = 325;
+    demMap.map_width = 150;
+    demMap.grid_height = 20;    // cm
+    demMap.grid_width = 20;     // cm
+    demMap.vehicle_gridX = 250;
+    demMap.vehicle_gridY = 75;
+    demMap.local_cjdemmap_length = 0;
+
+    demVis = cvCreateImage(cvSize(demMap.map_width, demMap.map_height), IPL_DEPTH_8U, 1);
+    cvZero(demVis);
+    int x0 = zmap->height/2 - 75;
+    int x1 = zmap->height/2 + 250;
+    int y0 = zmap->width/2 - 75;
+    int y1 = zmap->width/2 + 75;
+    int step = demVis->widthStep / sizeof(uchar);
+    int zstep = zmap->widthStep / sizeof(uchar);
+
+    for (int x = x1; x > x0; x --)
+        for (int y = y1; y > y0; y --) {
+            demMap.local_cjdemmap[demMap.local_cjdemmap_length ++] = zmap->imageData[x * zstep + y];
+            demVis->imageData[(x1 - x) * step + (y1 - y)] = zmap->imageData[x * zstep + y];
+        }
+    cvShowImage("DEM", demVis);
+    cvReleaseImage(&demVis);
+}
+// 将结果写入AttributeMap
+void WriteAttributeMap(unsigned long stamp, P_DWDX_INFO_MSG *dwdxData, IplImage* pmap, P_CJATTRIBUTEMAP_MSG &attributeMap)
+{
+    attributeMap.time_stamp = stamp;
+    attributeMap.fc.time_label = dwdxData->time_stamp;
+    attributeMap.fc.global_x = dwdxData->global_x;
+    attributeMap.fc.global_y = dwdxData->global_y;
+    attributeMap.fc.global_h = dwdxData->global_h;
+    attributeMap.fc.zone = dwdxData->zone;
+    attributeMap.fc.heading = dwdxData->heading;
+    attributeMap.fc.pitch = dwdxData->pitch;
+    attributeMap.fc.roll = dwdxData->roll;
+    attributeMap.fc.global_vx = dwdxData->global_vx;
+    attributeMap.fc.global_vy = dwdxData->global_vy;
+    attributeMap.fc.global_vh = dwdxData->global_vz;
+    attributeMap.fc.heading_rate = dwdxData->global_wx;
+    attributeMap.fc.pitch_rate = dwdxData->global_wy;
+    attributeMap.fc.roll_rate = dwdxData->global_wz;
+    attributeMap.fc.longitude = dwdxData->longitude;
+    attributeMap.fc.latitude = dwdxData->latitude;
+    attributeMap.map_height = 325;
+    attributeMap.map_width = 150;
+    attributeMap.grid_height = 20;    // cm
+    attributeMap.grid_width = 20;     // cm
+    attributeMap.vehicle_gridX = 250;
+    attributeMap.vehicle_gridY = 75;
+    attributeMap.local_cjattributemap_length = 0;
+
+    int x0 = pmap->height/2 - 75;
+    int x1 = pmap->height/2 + 250;
+    int y0 = pmap->width/2 - 75;
+    int y1 = pmap->width/2 + 75;
+    int pstep = pmap->widthStep / sizeof(uchar);
+
+    for (int x = x1; x > x0; x --)
+        for (int y = y1; y > y0; y --) {
+            // Probability of trafficability
+            int newProb = double(pmap->imageData[x * pstep + y] & 0xFF) / 2.55;
+            // Label of pixel
+            int newLabel = 0;
+            attributeMap.local_cjattributemap[attributeMap.local_cjattributemap_length ++] = newProb;
+        }
+}
+
+// 在线处理程序
+void DoProcessing(P_CGQHDL64E_INFO_MSG *veloData, P_DWDX_INFO_MSG *dwdxData, P_CJDEMMAP_MSG &demMap, P_CJATTRIBUTEMAP_MSG &attributeMap)
+{
+    if (ReadRcsData(veloData, dwdxData))  // 读取一帧数据（580个block），保存在onefrm中
+    {
+        if (dFrmNo%100==0)
+            printf("%d (%d)\n",dFrmNo,dFrmNum);
+
+        //每一帧的处理
+        ProcessOneFrame ();
+
+        //将结果写到DemMap和AttributeMap里
+        WriteDemMap(veloData->header.stamp, dwdxData, gm.zmap, demMap);
+        WriteAttributeMap(veloData->header.stamp, dwdxData, gm.pmap, attributeMap);
+
+        //绘制历史轨迹
+        DrawTraj(dm.lmap);
+        DrawTraj(gm.smap);
+
+        //可视化
+        char str[10];
+        sprintf (str, "Fno%d", dFrmNo);
+        cvPutText(dm.lmap, str, cvPoint(50,50), &font, CV_RGB(0,0,255));
+
+        cvResize (rm.rMap, col);  // 距离图像 可视化
+        cvShowImage("range image",col);
+        cvResize (rm.lMap, col);  // 分割图像 可视化
+        cvShowImage("region",col);
+        cv::Mat zmapRGB;          // 高程图 伪彩可视化
+        cv::applyColorMap(cvarrToMat(gm.zmap), zmapRGB, cv::COLORMAP_HOT);
+        cv::Mat pmapRGB;          // 通行概率图 伪彩可视化
+        cv::applyColorMap(cvarrToMat(gm.pmap), pmapRGB, cv::COLORMAP_BONE);
+
+        if (dm.lmap) cvShowImage("l_dem",dm.lmap);    // 单帧 可行驶区域
+//        if (gm.zmap) cv::imshow("g_zdem", zmapRGB);      // 高程图
+//        if (gm.pmap) cv::imshow("g_pdem", pmapRGB);    // 多帧 可行驶概率图
+        if (gm.smap) cvShowImage("g_sublab",gm.smap);    // 属性图
+
+        char WaitKey;
+        WaitKey = cvWaitKey(1);
+        dFrmNo++;
+
+    }
+}
+
+//主处理程序（离线）
+void DoProcessingOffline(P_CGQHDL64E_INFO_MSG *veloData, P_DWDX_INFO_MSG *dwdxData, P_CJDEMMAP_MSG &demMap, P_CJATTRIBUTEMAP_MSG &attributeMap)
+{
     if (!LoadCalibFile ("/home/gaobiao/Documents/201-2018/build-DsvSegRegion-Desktop_Qt_5_10_1_GCC_64bit-Debug/vel.calib")) {
         printf ("Invalid calibration file\n");
         getchar ();
@@ -396,37 +635,36 @@ void DoProcessing()
     delete []onefrm;
 }
 
-int main (int argc, char *argv[])
-{
+//int main (int argc, char *argv[])
+//{
 
-    if (argc<3) {
-        printf ("Usage : %s [infile] [calibfile]\n", argv[0]);
-        printf ("[infile] DSV file.\n");
-        printf ("[calibfile] define the calibration parameters of the DSV file.\n");
-        printf ("[outfile] segmentation results to DSVL file.\n");
-        printf ("[seglog] data association results to LOG file.\n");
-        printf ("[videooutflg] 1: output video to default files, 0: no output.\n");
-        exit(1);
-    }
-
-//    if (!LoadCalibFile (argv[2])) {
-//        printf ("Invalid calibration file : %s.\n", argv[2]);
-//        getchar ();
-//        exit (1);
+//    if (argc<3) {
+//        printf ("Usage : %s [infile] [calibfile]\n", argv[0]);
+//        printf ("[infile] DSV file.\n");
+//        printf ("[calibfile] define the calibration parameters of the DSV file.\n");
+//        printf ("[outfile] segmentation results to DSVL file.\n");
+//        printf ("[seglog] data association results to LOG file.\n");
+//        printf ("[videooutflg] 1: output video to default files, 0: no output.\n");
+//        exit(1);
 //    }
 
-//    if ((dfp = fopen(argv[1], "r")) == NULL) {
-//        printf("File open failure : %s\n", argv[1]);
-//        getchar ();
-//        exit (1);
-//    }
+////    if (!LoadCalibFile (argv[2])) {
+////        printf ("Invalid calibration file : %s.\n", argv[2]);
+////        getchar ();
+////        exit (1);
+////    }
 
-    DoProcessing ();
+////    if ((dfp = fopen(argv[1], "r")) == NULL) {
+////        printf("File open failure : %s\n", argv[1]);
+////        getchar ();
+////        exit (1);
+////    }
 
-    printf ("Labeling succeeded.\n");
+//    DoProcessingOffline ();
 
-    fclose(dfp);
+//    printf ("Labeling succeeded.\n");
 
-    return 0;
-}
+//    fclose(dfp);
 
+//    return 0;
+//}

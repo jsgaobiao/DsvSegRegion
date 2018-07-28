@@ -7,6 +7,7 @@ extern ONEDSVFRAME	*onefrm;
 void DrawRangeView ()
 {
 	int x, y;
+    int step = rm.wid; // rm.rMap->widthStep / sizeof(uchar);
 
 	cvZero(rm.rMap);	//¾àÀëÍ¼Ïñ
 	cvZero(rm.lMap);	//·Ö¸îÍ¼Ïñ
@@ -14,47 +15,47 @@ void DrawRangeView ()
 	for (y=0; y<rm.len; y++) {
 		for (x=0; x<rm.wid; x++) {
 			if (!rm.pts[y*rm.wid+x].i) {
-				rm.rMap->imageData[(y*rm.wid+x)*3] = 255;
-				rm.rMap->imageData[(y*rm.wid+x)*3+1] = 255;
-				rm.rMap->imageData[(y*rm.wid+x)*3+2] = 255;
+                rm.rMap->imageData[(y*step+x)*3] = 255;
+                rm.rMap->imageData[(y*step+x)*3+1] = 255;
+                rm.rMap->imageData[(y*step+x)*3+2] = 255;
 				continue;
 			}
             // À¶É«
             if (rm.pts[y*rm.wid+x].z<0.0) {
-                rm.rMap->imageData[(y*rm.wid+x)*3] = BOUND(nint(-rm.pts[y*rm.wid+x].z*100.0),0,255);
-				rm.rMap->imageData[(y*rm.wid+x)*3+1] = 0;
-                rm.rMap->imageData[(y*rm.wid+x)*3+2] = 0;
+                rm.rMap->imageData[(y*step+x)*3] = BOUND(nint(-rm.pts[y*rm.wid+x].z*100.0),0,255);
+                rm.rMap->imageData[(y*step+x)*3+1] = 0;
+                rm.rMap->imageData[(y*step+x)*3+2] = 0;
 			}
             // ºìÉ«
 			else {
-                rm.rMap->imageData[(y*rm.wid+x)*3] = 0;
-				rm.rMap->imageData[(y*rm.wid+x)*3+1] = 0;
-                rm.rMap->imageData[(y*rm.wid+x)*3+2] = BOUND(nint(rm.pts[y*rm.wid+x].z*100.0),0,255);
+                rm.rMap->imageData[(y*step+x)*3] = 0;
+                rm.rMap->imageData[(y*step+x)*3+1] = 0;
+                rm.rMap->imageData[(y*step+x)*3+2] = BOUND(nint(rm.pts[y*rm.wid+x].z*100.0),0,255);
 			}
             // Seg image
 			if (rm.regionID[y*rm.wid+x]==EDGEPT) {
-				rm.lMap->imageData[(y*rm.wid+x)*3+2]	= 128;
-				rm.lMap->imageData[(y*rm.wid+x)*3+1]	= 128;
-				rm.lMap->imageData[(y*rm.wid+x)*3+0]	= 255;
+                rm.lMap->imageData[(y*step+x)*3+2]	= 128;
+                rm.lMap->imageData[(y*step+x)*3+1]	= 128;
+                rm.lMap->imageData[(y*step+x)*3+0]	= 255;
 			}
 			else if (rm.regionID[y*rm.wid+x]==NONVALID)
 			{
-				rm.lMap->imageData[(y*rm.wid+x)*3+2]	= 255;
-				rm.lMap->imageData[(y*rm.wid+x)*3+1]	= 255;
-				rm.lMap->imageData[(y*rm.wid+x)*3+0]	= 255;
+                rm.lMap->imageData[(y*step+x)*3+2]	= 255;
+                rm.lMap->imageData[(y*step+x)*3+1]	= 255;
+                rm.lMap->imageData[(y*step+x)*3+0]	= 255;
 			}
 			else if (rm.regionID[y*rm.wid+x]==UNKNOWN)
 			{
-				rm.lMap->imageData[(y*rm.wid+x)*3+2]	= 64;
-				rm.lMap->imageData[(y*rm.wid+x)*3+1]	= 64;
-				rm.lMap->imageData[(y*rm.wid+x)*3+0]	= 64;
+                rm.lMap->imageData[(y*step+x)*3+2]	= 64;
+                rm.lMap->imageData[(y*step+x)*3+1]	= 64;
+                rm.lMap->imageData[(y*step+x)*3+0]	= 64;
 			}
 			else {
 				SEGBUF *segbuf = &rm.segbuf[rm.regionID[y*rm.wid+x]];
 				if (segbuf->ptnum) {
-                    rm.lMap->imageData[(y*rm.wid+x)*3+0]	= nint(fabs(segbuf->norm.x)*255.0);
-                    rm.lMap->imageData[(y*rm.wid+x)*3+1]	= nint(fabs(segbuf->norm.y)*255.0);
-                    rm.lMap->imageData[(y*rm.wid+x)*3+2]	= nint(segbuf->norm.z*255.0);
+                    rm.lMap->imageData[(y*step+x)*3+0]	= nint(fabs(segbuf->norm.x)*255.0);
+                    rm.lMap->imageData[(y*step+x)*3+1]	= nint(fabs(segbuf->norm.y)*255.0);
+                    rm.lMap->imageData[(y*step+x)*3+2]	= nint(segbuf->norm.z*255.0);
 				}
 			}
 		}

@@ -1,6 +1,7 @@
-#include <rcs.hh>
-//#include <P_CGQHDL64E_INFOn.hh>
-//#include <P_DWDX_INFOn.hh>
+#include <../P_CGQHDL64E_INFOn.hh>
+#include <../P_DWDX_INFOn.hh>
+#include <../P_CJDEMMAPn.hh>
+#include <../P_CJATTRIBUTEMAPn.hh>
 
 #include <cstdlib>
 #include <cstring>
@@ -14,16 +15,7 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
-
-//#if _DEBUG
-//#pragma comment(lib, "D:/Program Files/opencv/build/x86/vc14/lib/opencv_highgui2413d.lib")
-//#pragma comment(lib, "D:/Program Files/opencv/build/x86/vc14/lib/opencv_imgproc2413d.lib")
-//#pragma comment(lib, "D:/Program Files/opencv/build/x86/vc14/lib/opencv_core2413d.lib")
-//#else
-//#pragma comment(lib, "D:/Program Files/opencv/build/x86/vc14/lib/opencv_highgui2413.lib")
-//#pragma comment(lib, "D:/Program Files/opencv/build/x86/vc14/lib/opencv_imgproc2413.lib")
-//#pragma comment(lib, "D:/Program Files/opencv/build/x86/vc14/lib/opencv_core2413.lib")
-//#endif
+#include <queue>
 
 #include <opencv2/opencv.hpp>
 
@@ -108,7 +100,7 @@ typedef struct {
 
 typedef struct {
 	float			x, y, z;
-	u_char			i;
+    u_char			i;
 } point3fi;
 
 typedef struct {
@@ -165,9 +157,9 @@ typedef struct {
     IplImage		*lMap;      // region segmentation image
 } RMAP;
 
-#define	WIDSIZ		30.0
-#define	LENSIZ		65.0
-#define	PIXSIZ		0.10        //0.25
+#define	WIDSIZ		40.0
+#define	LENSIZ		100.0
+#define	PIXSIZ		0.1        //0.25
 #define	POSOBSMINHEIGHT	0.6		//0.6m
 #define	VEHICLEHEIGHT	3.0		//3.0m
 #define	NEARVEHICLEDIS	6.0		//5.0m
@@ -206,6 +198,7 @@ typedef struct {
 
 #define UNKNOWN			0
 #define NONVALID		-9999
+#define DONTCARE        -99
 #define EDGEPT			-9
 
 #define TRAVESABLE		1
@@ -228,7 +221,6 @@ typedef struct {
 //extern TRANSINFO calibInfo;
 //extern ONEDSVFRAME	*onefrm;
 
-void DoProcessing();
 void rMatrixInit (MATRIX &rt);
 void rMatrixmulti (MATRIX &r, MATRIX &rt);
 void createRotMatrix_ZYX (MATRIX &rt, double rotateX, double rotateY, double rotateZ);

@@ -12,6 +12,8 @@ void  DrawDem (DMAP &m)
         m.zmap = cvCreateImage(cvSize(m.wid,m.len), IPL_DEPTH_8U, 1);
     // 0表示未知高度
     cvZero(m.zmap);
+    int step = m.zmap->widthStep / sizeof(uchar);
+
     int x, y;
     for (y=0; y<m.len; y++) {
         for (x=0; x<m.wid; x++) {
@@ -19,11 +21,11 @@ void  DrawDem (DMAP &m)
             // 如果是路面区域，取路面高度
             if (m.demgnum[y*m.wid+x]) {
                 // 映射前的高度范围(-3.33m, 5.2m)
-                m.zmap->imageData[y*m.wid+x] = BOUND(nint(m.demg[y*m.wid+x] + VEHICLEHEIGHT) * 30 + 100,  1, 255);
+                m.zmap->imageData[y*step+x] = BOUND(nint(m.demg[y*m.wid+x] + VEHICLEHEIGHT) * 30 + 100,  1, 255);
             }
             // 如果是非路面区域,取最大高度（test）,映射前的高度范围(-3.33m, 5.2m)
             else if (m.demhnum[y*m.wid+x]) {
-                m.zmap->imageData[y*m.wid+x] = BOUND(nint(m.demhmax[y*m.wid+x] + VEHICLEHEIGHT) * 30 + 100, 1, 255);
+                m.zmap->imageData[y*step+x] = BOUND(nint(m.demhmax[y*m.wid+x] + VEHICLEHEIGHT) * 30 + 100, 1, 255);
             }
         }
     }
@@ -31,8 +33,10 @@ void  DrawDem (DMAP &m)
     // 可视化lab 可通行区域
     if (m.lab) {
         // lmap:标记可通行区域和不可通行区域
-        if (!m.lmap)
+        if (!m.lmap) {
             m.lmap = cvCreateImage(cvSize(m.wid,m.len), IPL_DEPTH_8U, 3);
+            printf("new lmap\n");
+        }
         cvZero(m.lmap);
         if (!m.pmap)
             m.pmap = cvCreateImage(cvSize(m.wid,m.len), IPL_DEPTH_8U, 1);
@@ -47,10 +51,10 @@ void  DrawDem (DMAP &m)
                 double pr = m.lpr[y*m.wid+x];
                 //可通行区域图
                 if (m.lab[y*m.wid+x]==TRAVESABLE) {
-                    m.lmap->imageData[(y*m.wid+x)*3] = 0;
-                    m.lmap->imageData[(y*m.wid+x)*3+1] =55+200*pr;
-                    m.lmap->imageData[(y*m.wid+x)*3+2] = 0;
-                    m.pmap->imageData[y*m.wid+x] = std::min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
+                    m.lmap->imageData[(y*step+x)*3] = 0;
+                    m.lmap->imageData[(y*step+x)*3+1] =55+200*pr;
+                    m.lmap->imageData[(y*step+x)*3+2] = 0;
+                    m.pmap->imageData[y*step+x] = std::min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
                 }
                 //不可通行区域
                 else {
@@ -58,34 +62,34 @@ void  DrawDem (DMAP &m)
                     if (m.centerln) {
                         if (m.demhmax[y*m.wid+x] > m.centerln[y].h + POSOBSMINHEIGHT) {
                             // 正障碍，红色
-                            m.lmap->imageData[(y*m.wid+x)*3] = 0;
-                            m.lmap->imageData[(y*m.wid+x)*3+1] =0;
-                            m.lmap->imageData[(y*m.wid+x)*3+2] = 55+200*pr;
-                            m.pmap->imageData[y*m.wid+x] = - min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
+                            m.lmap->imageData[(y*step+x)*3] = 0;
+                            m.lmap->imageData[(y*step+x)*3+1] =0;
+                            m.lmap->imageData[(y*step+x)*3+2] = 55+200*pr;
+                            m.pmap->imageData[y*step+x] = - min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
                         }
                         else
                         if (m.demhmin[y*m.wid+x] < m.centerln[y].h - POSOBSMINHEIGHT) {
                             //负障碍，蓝色
-                            m.lmap->imageData[(y*m.wid+x)*3] = 55+200*pr;
-                            m.lmap->imageData[(y*m.wid+x)*3+1] =0;
-                            m.lmap->imageData[(y*m.wid+x)*3+2] = 0;
-                            m.pmap->imageData[y*m.wid+x] = - min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
+                            m.lmap->imageData[(y*step+x)*3] = 55+200*pr;
+                            m.lmap->imageData[(y*step+x)*3+1] =0;
+                            m.lmap->imageData[(y*step+x)*3+2] = 0;
+                            m.pmap->imageData[y*step+x] = - min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
                         }
                         else {
                             //与道路同高度，按TRAVESABLE可视化
-                            m.lmap->imageData[(y*m.wid+x)*3] = 0;
-                            m.lmap->imageData[(y*m.wid+x)*3+1] = 55+200*pr;
-                            m.lmap->imageData[(y*m.wid+x)*3+2] = 0;
-                            m.pmap->imageData[y*m.wid+x] = min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
+                            m.lmap->imageData[(y*step+x)*3] = 0;
+                            m.lmap->imageData[(y*step+x)*3+1] = 55+200*pr;
+                            m.lmap->imageData[(y*step+x)*3+2] = 0;
+                            m.pmap->imageData[y*step+x] = min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
                         }
                     }
                     // 如果 没有道路中心线（单帧图）
                     else {
                         //不可通行NONTRAVESABLE，粉色
-                        m.lmap->imageData[(y*m.wid+x)*3] = 55+200*pr;
-                        m.lmap->imageData[(y*m.wid+x)*3+1] =0;
-                        m.lmap->imageData[(y*m.wid+x)*3+2] = 55+200*pr;
-                        m.pmap->imageData[y*m.wid+x] = - min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
+                        m.lmap->imageData[(y*step+x)*3] = 55+200*pr;
+                        m.lmap->imageData[(y*step+x)*3+1] =0;
+                        m.lmap->imageData[(y*step+x)*3+2] = 55+200*pr;
+                        m.pmap->imageData[y*step+x] = - min(m.lpr[y*m.wid+x], 1.0) * 127 + 128;
                     }
                 }
             }
@@ -110,62 +114,62 @@ void  DrawDem (DMAP &m)
                     if (m.centerln) {
                         if (m.demhmax[y*m.wid+x] > m.centerln[y].h + POSOBSMINHEIGHT) {
                             // 正障碍，红色
-                            m.smap->imageData[(y*m.wid+x)*3] = 0;
-                            m.smap->imageData[(y*m.wid+x)*3+1] =0;
-                            m.smap->imageData[(y*m.wid+x)*3+2] = 255;
+                            m.smap->imageData[(y*step+x)*3] = 0;
+                            m.smap->imageData[(y*step+x)*3+1] =0;
+                            m.smap->imageData[(y*step+x)*3+2] = 255;
                         }
                         else
                         if (m.demhmin[y*m.wid+x] < m.centerln[y].h - POSOBSMINHEIGHT) {
                             //负障碍，蓝色
-                            m.smap->imageData[(y*m.wid+x)*3] = 255;
-                            m.smap->imageData[(y*m.wid+x)*3+1] =0;
-                            m.smap->imageData[(y*m.wid+x)*3+2] = 0;
+                            m.smap->imageData[(y*step+x)*3] = 255;
+                            m.smap->imageData[(y*step+x)*3+1] =0;
+                            m.smap->imageData[(y*step+x)*3+2] = 0;
                         }
                     }
                 }
                 // 可通行区域的标签
                 if (m.sublab[y*m.wid+x]==FLATGROUND || m.lab[y*m.wid+x]==TRAVESABLE) {
                     //平面 绿色
-                    m.smap->imageData[(y*m.wid+x)*3] = 0;
-                    m.smap->imageData[(y*m.wid+x)*3+1] =255;
-                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
+                    m.smap->imageData[(y*step+x)*3] = 0;
+                    m.smap->imageData[(y*step+x)*3+1] =255;
+                    m.smap->imageData[(y*step+x)*3+2] = 0;
                 }
                 // else
                 if (m.sublab[y*m.wid+x]==DOWNSLOPE) {
                     //下坡(方块化，需要调试)
-//                    m.smap->imageData[(y*m.wid+x)*3] = 128; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
-//                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
-//                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
+//                    m.smap->imageData[(y*step+x)*3] = 128; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
+//                    m.smap->imageData[(y*step+x)*3+1] = 128;
+//                    m.smap->imageData[(y*step+x)*3+2] = 0;
                 }
                 else if (m.sublab[y*m.wid+x]==UPSLOPE) {
                     //上坡(方块化，需要调试)
-//                    m.smap->imageData[(y*m.wid+x)*3] = 64; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
-//                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
-//                    m.smap->imageData[(y*m.wid+x)*3+2] = 255;
+//                    m.smap->imageData[(y*step+x)*3] = 64; //BOUND(nint(fabs(m.groll[y*m.wid+x])*255),0,255);
+//                    m.smap->imageData[(y*step+x)*3+1] = 128;
+//                    m.smap->imageData[(y*step+x)*3+2] = 255;
                 }
                 else if (m.sublab[y*m.wid+x]==LEFTSIDESLOPE) {
                     //左斜坡
-//                    m.smap->imageData[(y*m.wid+x)*3] = 128;
-//                    m.smap->imageData[(y*m.wid+x)*3+1] = 128;
-//                    m.smap->imageData[(y*m.wid+x)*3+2] = 0; //BOUND(nint(fabs(m.gpitch[y*m.wid+x])*255),0,255);
+//                    m.smap->imageData[(y*step+x)*3] = 128;
+//                    m.smap->imageData[(y*step+x)*3+1] = 128;
+//                    m.smap->imageData[(y*step+x)*3+2] = 0; //BOUND(nint(fabs(m.gpitch[y*m.wid+x])*255),0,255);
                 }
                 else if (m.sublab[y*m.wid+x]==RIGHTSIDESLOPE) {
                     //右斜坡
-//                    m.smap->imageData[(y*m.wid+x)*3] = 128;
-//                    m.smap->imageData[(y*m.wid+x)*3+1] =128;
-//                    m.smap->imageData[(y*m.wid+x)*3+2] = 0; //BOUND(nint(fabs(m.gpitch[y*m.wid+x])*255),0,255);;
+//                    m.smap->imageData[(y*step+x)*3] = 128;
+//                    m.smap->imageData[(y*step+x)*3+1] =128;
+//                    m.smap->imageData[(y*step+x)*3+2] = 0; //BOUND(nint(fabs(m.gpitch[y*m.wid+x])*255),0,255);;
                 }
                 else if (m.sublab[y*m.wid+x]==NEGATOBSTA) {
                     //负障碍 蓝色
-//                    m.smap->imageData[(y*m.wid+x)*3] = 255;
-//                    m.smap->imageData[(y*m.wid+x)*3+1] =0;
-//                    m.smap->imageData[(y*m.wid+x)*3+2] = 0;
+//                    m.smap->imageData[(y*step+x)*3] = 255;
+//                    m.smap->imageData[(y*step+x)*3+1] =0;
+//                    m.smap->imageData[(y*step+x)*3+2] = 0;
                 }
                 else if (m.sublab[y*m.wid+x]==POSSIOBSTA) {
                     //正障碍 红色
-//                    m.smap->imageData[(y*m.wid+x)*3] = 0;
-//                    m.smap->imageData[(y*m.wid+x)*3+1] =0;
-//                    m.smap->imageData[(y*m.wid+x)*3+2] = 255;
+//                    m.smap->imageData[(y*step+x)*3] = 0;
+//                    m.smap->imageData[(y*step+x)*3+1] =0;
+//                    m.smap->imageData[(y*step+x)*3+2] = 255;
                 }
             }
         }
@@ -175,13 +179,13 @@ void  DrawDem (DMAP &m)
         int x, y;
         for (y=0; y<m.len; y++) {
             x=int((m.centerln[y].x0+m.centerln[y].x1)/2.0);
-            m.lmap->imageData[(y*m.wid+x)*3] = 255;
-            m.lmap->imageData[(y*m.wid+x)*3+1] =255;
-            m.lmap->imageData[(y*m.wid+x)*3+2] = 255;
+            m.lmap->imageData[(y*step+x)*3] = 255;
+            m.lmap->imageData[(y*step+x)*3+1] =255;
+            m.lmap->imageData[(y*step+x)*3+2] = 255;
             if ((x+1)>=m.wid) continue;
-            m.lmap->imageData[(y*m.wid+x+1)*3] = 255;
-            m.lmap->imageData[(y*m.wid+x+1)*3+1] =255;
-            m.lmap->imageData[(y*m.wid+x+1)*3+2] = 255;
+            m.lmap->imageData[(y*step+x+1)*3] = 255;
+            m.lmap->imageData[(y*step+x+1)*3+1] =255;
+            m.lmap->imageData[(y*step+x+1)*3+2] = 255;
         }
     }
     */
@@ -236,10 +240,6 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
     if (!gmtar.dataon)
         return;
 
-//    DrawDem (gmtar);
-//    cv::Mat cvgmtar = cvarrToMat(gmtar.lmap).clone();
-//    imshow("t0", cvgmtar);
-
     //gmtar is the data of the previous frame
     //copy gmtar to gmtmp
     CopyGloDem (&gmtmp, &gmtar);
@@ -250,13 +250,6 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
     gmtar.trans.ang = onefrm->dsv[0].ang.z;
     gmtar.trans.shv.x = onefrm->dsv[0].shv.x;
     gmtar.trans.shv.y = onefrm->dsv[0].shv.y;
-
-//    cntFlag ++;
-//    if (cntFlag == 1) {
-//        gmtar.trans.ang = gmtmp.trans.ang;
-//        gmtar.trans.shv.x = gmtmp.trans.shv.x + 10;
-//        gmtar.trans.shv.y = gmtmp.trans.shv.y + 10;
-//    }
 
     //estimation for transformation
     MAT2D	rot1, rot2;
@@ -304,7 +297,7 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
                 for (int xx=x0; xx<=x1; xx++) {
                     if (xx<0 || xx>=gmtar.wid) continue;
                     double dd=sqrt(double((xx-p.x)*(xx-p.x)+(yy-p.y)*(yy-p.y)));
-                    double fac=0.85;//(1.0-dd/1.415)*0.9;
+                    double fac=0.89;//(1.0-dd/1.415)*0.9;
                     int dn;
                     double lpr = gmtmp.lpr[y*gmtmp.wid+x]*fac;
                     if (lpr<0.2) continue;
@@ -352,10 +345,6 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
             }
         }
     }
-//    DrawDem (gmtar);
-//    cv::Mat cvgmtar1 = cvarrToMat(gmtar.lmap).clone();
-//    imshow("t1", cvgmtar1);
-//    cv::waitKey(0);
 }
 
 
@@ -370,7 +359,8 @@ void UpdateGloDem (DMAP &glo, DMAP &loc)
     int dx, dy;
     for (dy=0; dy<loc.len; dy++) {
         for (dx=0; dx<loc.wid; dx++) {
-            if (!loc.lab[dy*loc.wid+dx])
+            double dis2Vehicle = sqrt(sqr(dx-loc.wid/2)+sqr(dy-loc.len/2));
+            if (loc.lab[dy*loc.wid+dx] == UNKNOWN &&  dis2Vehicle > 60.0 / PIXSIZ)
                 continue;
             int gx, gy;
             gx = dx-loc.wid/2+glo.wid/2;
@@ -382,17 +372,32 @@ void UpdateGloDem (DMAP &glo, DMAP &loc)
             }
             // 相同标签，加强
             else if (loc.lab[dy*loc.wid+dx] == glo.lab[gy*glo.wid+gx]) {
-                fac = loc.lpr[dy*loc.wid+dx] * 2.0; // /0.5*5.0;
+                if (loc.lab[dy*loc.wid+dx] == UNKNOWN)
+                    break;
+                fac = loc.lpr[dy*loc.wid+dx] * 2.0;
                 glo.lpr[gy*glo.wid+gx] = min (1.0, glo.lpr[gy*glo.wid+gx]*fac);
             }
             // 不同标签，竞争
             else { //if (loc.lab[dy*loc.wid+dx] != glo.lab[gy*glo.wid+gx])
-//                fac = 0.5/loc.lpr[dy*loc.wid+dx];
-                fac = loc.lpr[dy*loc.wid+dx] / 2.0;
-                glo.lpr[gy*glo.wid+gx] = min (1.0, glo.lpr[gy*glo.wid+gx]*fac);
-                if (glo.lpr[gy*glo.wid+gx]<0.2) {
-                    glo.lab[gy*glo.wid+gx] = loc.lab[dy*loc.wid+dx];
-                    glo.lpr[gy*glo.wid+gx] = loc.lpr[dy*loc.wid+dx];
+                // 车周围黑圈处理
+                if (loc.lab[dy*loc.wid+dx] == UNKNOWN) {
+                    double _fac = 1.8;
+                    // 超过车辆盲区的未知区域，使用大于1的衰减速率（减少衰减）
+                    if (dis2Vehicle > 10.0 / PIXSIZ)
+                        _fac = 1.1;
+                    glo.lpr[gy*glo.wid+gx] = min (1.0, glo.lpr[gy*glo.wid+gx] * _fac);
+                }
+                else {
+                    fac = loc.lpr[dy*loc.wid+dx] / 2.0;
+                    // (暂时不加)可通行区域优先覆盖障碍物格点
+                    //if (loc.lab[dy*loc.wid+dx] == TRAVESABLE) {
+                    //    fac *= 2.0;
+                    //}
+                    glo.lpr[gy*glo.wid+gx] = min (1.0, glo.lpr[gy*glo.wid+gx]*fac);
+                    if (glo.lpr[gy*glo.wid+gx] < 0.2) {
+                        glo.lab[gy*glo.wid+gx] = loc.lab[dy*loc.wid+dx];
+                        glo.lpr[gy*glo.wid+gx] = loc.lpr[dy*loc.wid+dx];
+                    }
                 }
             }
 
@@ -561,6 +566,7 @@ void GenerateLocDem (DMAP &loc)
         }
     }
 
+    // 计算每个栅格的概率
     for (y=0; y<loc.len; y++) {
         for (x=0; x<loc.wid; x++) {
             //lab还没有设置
