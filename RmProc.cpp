@@ -76,9 +76,11 @@ void GenerateRangeView ()
 			for (int k=0; k<PNTS_PER_LINE; k++) {
 				point3fi *p = &onefrm->dsv[i].points[j*PNTS_PER_LINE+k];
 				if (!p->i)
-					continue;
-
+                    continue;
 				float rng = sqrt(sqr(p->x)+sqr(p->y)+sqr(p->z));
+                if (rng == 0) {
+                    int gb = 1;
+                }
 				float angv = asin (p->z/rng);
 				float angh = atan2 (p->y, p->x);
 				float ix = (angh-rm.h0)/rm.hres;
@@ -86,8 +88,8 @@ void GenerateRangeView ()
 
 				int x0, y0, x1, y1;
 				int inten;
-				x0 = int(ix); y0 = int(iy);
-				x1 = int(ix)+1; y1 = int(iy)+1;
+                x0 = round(ix); y0 = round(iy);
+                x1 = round(ix)+1; y1 = round(iy)+1;
 				for (int y=y0; y<=y1; y++) {
 					if (y<0 || y>=rm.len) continue;
 					for (int x=x0; x<=x1; x++) {

@@ -290,8 +290,8 @@ void PredictGloDem (DMAP &gmtar, DMAP &gmtmp)
             p.x = p.x/PIXSIZ+gmtar.wid/2;
             p.y = p.y/PIXSIZ+gmtar.len/2;
             int x0, y0, x1, y1;
-            x0 = int(p.x)-0; y0 = int(p.y)-0;
-            x1 = int(p.x)+0; y1 = int(p.y)+0;
+            x0 = round(p.x)-0; y0 = round(p.y)-0;
+            x1 = round(p.x)+0; y1 = round(p.y)+0;
             for (int yy=y0; yy<=y1; yy++) {
                 if (yy<0 || yy>=gmtar.len) continue;
                 for (int xx=x0; xx<=x1; xx++) {
